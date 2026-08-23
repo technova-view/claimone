@@ -266,9 +266,26 @@ export function ClaimHero({
               <button type="button" onClick={() => step(-1)} disabled={amountCents <= MIN_BID_CENTS} className={stepperClass} aria-label="Decrease amount">
                 −
               </button>
-              <span className="min-w-[8ch] flex-1 rounded-md border border-input bg-background py-1.5 text-center font-mono text-xl font-bold tabular-nums text-primary">
-                {formatAmount(amountCents)}
-              </span>
+              <div className="relative min-w-[8ch] flex-1">
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 font-mono text-lg font-bold text-primary">
+                  $
+                </span>
+                <input
+                  type="number"
+                  min={MIN_BID_CENTS / 100}
+                  step="1"
+                  inputMode="numeric"
+                  aria-label="Bid amount in dollars"
+                  value={amountCents / 100}
+                  onChange={(e) => {
+                    const dollars = e.target.value === "" ? 0 : Number(e.target.value);
+                    if (!Number.isFinite(dollars)) return;
+                    setAmountCents(Math.max(0, Math.round(dollars * 100)));
+                  }}
+                  onBlur={() => setAmountCents((current) => Math.max(MIN_BID_CENTS, current))}
+                  className="w-full rounded-md border border-input bg-background py-1.5 pl-6 pr-2 text-center font-mono text-xl font-bold tabular-nums text-primary outline-none transition-shadow [appearance:textfield] focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                />
+              </div>
               <button type="button" onClick={() => step(1)} className={stepperClass} aria-label="Increase amount">
                 +
               </button>

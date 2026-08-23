@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { LeaderboardRow } from "@/lib/types/leaderboard";
 import type { BidScope } from "@/lib/types/scope";
-import { displayHostFor, faviconUrlFor, outboundLinkFor, timeAgo, xAvatarUrlFor } from "@/lib/services/link-display";
+import { displayHostFor, faviconUrlFor, timeAgo, xAvatarUrlFor } from "@/lib/services/link-display";
+import { slugForListing } from "@/lib/services/product-slug";
 import { useAppModals } from "@/components/app-modals/app-modals-provider";
 import { MIN_BID_CENTS } from "@/lib/config/bid-config";
 import { cn } from "@/lib/utils";
@@ -148,10 +150,8 @@ export function LeaderboardTable({
 
             return (
               <li key={row.id} className="border-b border-border last:border-b-0">
-                <a
-                  href={outboundLinkFor(row)}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link
+                  href={`/product/${slugForListing(row)}`}
                   className="group flex items-center gap-4 py-3 transition-colors hover:bg-secondary/40"
                 >
                   <span className="w-8 shrink-0 text-center font-mono text-sm font-semibold text-muted-foreground">
@@ -178,7 +178,7 @@ export function LeaderboardTable({
                   <span className="shrink-0 font-mono text-sm font-semibold text-primary">
                     {formatAmount(row.amountCents)}
                   </span>
-                </a>
+                </Link>
               </li>
             );
           })}
@@ -273,10 +273,8 @@ function TopThreeRow({
   const isLeader = row.rank === 1;
 
   return (
-    <a
-      href={outboundLinkFor(row)}
-      target="_blank"
-      rel="noopener noreferrer"
+    <Link
+      href={`/product/${slugForListing(row)}`}
       className={cn(
         "group relative flex items-center gap-3 rounded-2xl border p-4 transition-colors sm:p-5",
         isLeader
@@ -320,6 +318,6 @@ function TopThreeRow({
           className="-mr-24"
         />
       </div>
-    </a>
+    </Link>
   );
 }
