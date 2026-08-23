@@ -1,14 +1,30 @@
-import type { HallOfFameEntry } from "@/lib/db/entities/hall-of-fame.entity";
+import type { BidSnapshot, HallOfFameEntry } from "@/lib/db/entities/hall-of-fame.entity";
+import { displayHostFor, faviconUrlFor, outboundLinkFor, xAvatarUrlFor } from "@/lib/services/link-display";
 
 function formatAmount(cents: number): string {
   return `$${(cents / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }
 
+function EntryAvatar({ snap }: { snap: BidSnapshot }) {
+  const src = snap.handle ? xAvatarUrlFor(snap.handle) : snap.url ? faviconUrlFor(snap.url) : null;
+  if (!src) {
+    return (
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-sm font-semibold text-muted-foreground">
+        ?
+      </span>
+    );
+  }
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} alt="" className="size-9 shrink-0 rounded-lg border border-border object-cover" />;
+}
+
 function EntryCard({ entry, highlight }: { entry: HallOfFameEntry; highlight?: boolean }) {
   const snap = entry.bidSnapshot;
+  const label = snap.handle ? `@${snap.handle}` : snap.url ? displayHostFor(snap.url) : "";
+
   return (
     <a
-      href={snap.url}
+      href={outboundLinkFor(snap)}
       target="_blank"
       rel="noopener noreferrer"
       className={
@@ -17,16 +33,9 @@ function EntryCard({ entry, highlight }: { entry: HallOfFameEntry; highlight?: b
           : "flex items-center gap-3 rounded-2xl border border-border bg-card p-3"
       }
     >
-      {snap.logoUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={snap.logoUrl} alt="" className="size-9 shrink-0 rounded-lg border border-border object-cover" />
-      ) : (
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-sm font-semibold text-muted-foreground">
-          {snap.title.charAt(0).toUpperCase()}
-        </span>
-      )}
+      <EntryAvatar snap={snap} />
       <span className="min-w-0 flex-1">
-        <span className="block truncate font-medium">{snap.title}</span>
+        <span className="block truncate font-medium">{label}</span>
         <span className="block truncate text-sm text-muted-foreground">{snap.categoryName}</span>
       </span>
       <span className="shrink-0 font-mono text-sm font-semibold text-primary">
@@ -41,7 +50,7 @@ export function HallOfFameList({ entries }: { entries: HallOfFameEntry[] }) {
 
   if (periods.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground">
+      <div className="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
         No completed periods yet.
       </div>
     );

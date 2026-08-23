@@ -9,18 +9,9 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 import { Category } from "./category.entity";
+import { BidScope, BidStatus } from "@/lib/types/scope";
 
-export enum BidScope {
-  DAILY = "daily",
-  WEEKLY = "weekly",
-  ALL_TIME = "all_time",
-}
-
-export enum BidStatus {
-  PENDING_PAYMENT = "pending_payment",
-  ACTIVE = "active",
-  ARCHIVED = "archived",
-}
+export { BidScope, BidStatus };
 
 @Entity("bids")
 @Index(["scope", "periodKey", "category", "status", "amountCents", "createdAt"])
@@ -42,20 +33,18 @@ export class Bid {
   @Column({ type: "uuid" })
   categoryId!: string;
 
-  @Column({ type: "varchar", length: 2048 })
-  url!: string;
+  // Exactly one of url / handle is set — enforced at the service layer, not
+  // the DB, matching the rest of this schema's validation style.
+  @Column({ type: "varchar", length: 2048, nullable: true })
+  url!: string | null;
 
   @Column({ type: "varchar", length: 64, nullable: true })
   handle!: string | null;
 
-  @Column({ type: "varchar", length: 200 })
-  title!: string;
-
+  // Auto-fetched (not user-entered) meta description of `url` at submission
+  // time; null for handle bids or when the fetch fails.
   @Column({ type: "varchar", length: 500, nullable: true })
   description!: string | null;
-
-  @Column({ type: "varchar", length: 2048, nullable: true })
-  logoUrl!: string | null;
 
   @Column({ type: "int" })
   amountCents!: number;

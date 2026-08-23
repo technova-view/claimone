@@ -8,6 +8,12 @@ import { getCategoryBySlug, listCategories } from "@/lib/services/category.servi
 import { scopeFromSlug } from "@/lib/services/scope-slug";
 import { BidScope } from "@/lib/db/entities/bid.entity";
 
+const SCOPE_LABEL: Record<BidScope, string> = {
+  [BidScope.DAILY]: "Daily",
+  [BidScope.WEEKLY]: "Weekly",
+  [BidScope.ALL_TIME]: "All-time",
+};
+
 export default async function CategoryLeaderboardPage({
   params,
 }: {
@@ -27,16 +33,19 @@ export default async function CategoryLeaderboardPage({
 
   return (
     <div className="flex flex-1 flex-col">
-      <SiteHeader activeScope={scopeSlug} />
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-8">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight">{category.name}</h1>
+      <SiteHeader activeScope={scopeSlug} activeCategorySlug={categorySlug} />
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-7 px-6 py-10">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium text-primary">{SCOPE_LABEL[scope]}</p>
+            <h1 className="text-3xl font-semibold tracking-tight">{category.name}</h1>
+          </div>
           {scope !== BidScope.ALL_TIME && (
             <Countdown scope={scope === BidScope.DAILY ? "daily" : "weekly"} />
           )}
         </div>
         <CategoryNav scope={scopeSlug} categories={categories} activeSlug={categorySlug} />
-        <LeaderboardTable rows={rows} />
+        <LeaderboardTable rows={rows} scope={scope} categorySlug={categorySlug} />
       </main>
     </div>
   );

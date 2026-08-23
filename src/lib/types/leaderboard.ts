@@ -3,11 +3,9 @@ import type { BidScope } from "@/lib/db/entities/bid.entity";
 export interface LeaderboardRow {
   id: string;
   rank: number;
-  url: string;
+  url: string | null;
   handle: string | null;
-  title: string;
   description: string | null;
-  logoUrl: string | null;
   amountCents: number;
   categoryId: string;
   categoryName: string;

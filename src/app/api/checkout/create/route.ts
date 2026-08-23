@@ -11,11 +11,8 @@ import { createBidCheckoutTransaction } from "@/lib/paddle/server";
 interface CreateCheckoutBody {
   scope: BidScope;
   categorySlug: string;
-  url: string;
+  url?: string;
   handle?: string;
-  title: string;
-  description?: string;
-  logoUrl?: string;
   amountCents: number;
 }
 
@@ -30,7 +27,7 @@ export async function POST(request: NextRequest) {
   if (!Object.values(BidScope).includes(body.scope)) {
     return NextResponse.json({ error: "Invalid scope." }, { status: 400 });
   }
-  if (!body.categorySlug || !body.url || !body.title || !body.amountCents) {
+  if (!body.categorySlug || (!body.url && !body.handle) || !body.amountCents) {
     return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
   }
 
@@ -46,15 +43,13 @@ export async function POST(request: NextRequest) {
       categorySlug: body.categorySlug,
       url: body.url,
       handle: body.handle,
-      title: body.title,
-      description: body.description,
-      logoUrl: body.logoUrl,
       amountCents: body.amountCents,
     });
 
+    const label = bid.url ?? `@${bid.handle}`;
     const transaction = await createBidCheckoutTransaction({
       bidId: bid.id,
-      title: body.title,
+      title: label,
       amountCents: body.amountCents,
     });
 

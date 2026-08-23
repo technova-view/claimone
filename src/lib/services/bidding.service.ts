@@ -2,6 +2,7 @@ import { getDataSource } from "@/lib/db/data-source";
 import { Bid, BidScope, BidStatus } from "@/lib/db/entities/bid.entity";
 import { getCategoryBySlug } from "@/lib/services/category.service";
 import { getDailyKey, getWeeklyKey } from "@/lib/services/period";
+import { fetchUrlDescription } from "@/lib/services/link-metadata.service";
 import {
   MAX_BID_CENTS,
   MIN_BID_CENTS,
@@ -51,9 +52,7 @@ export async function getLeaderboard({ scope, categorySlug }: LeaderboardParams)
     rank: index + 1,
     url: bid.url,
     handle: bid.handle,
-    title: bid.title,
     description: bid.description,
-    logoUrl: bid.logoUrl,
     amountCents: bid.amountCents,
     categoryId: bid.categoryId,
     categoryName: bid.category.name,
@@ -159,19 +158,28 @@ export async function validateAndPriceBid({
 interface CreatePendingBidInput {
   scope: BidScope;
   categorySlug: string;
-  url: string;
+  url?: string | null;
   handle?: string | null;
-  title: string;
-  description?: string | null;
-  logoUrl?: string | null;
   amountCents: number;
 }
 
 export async function createPendingBid(input: CreatePendingBidInput): Promise<Bid> {
+  const url = input.url?.trim() || null;
+  const handle = input.handle?.trim().replace(/^@/, "") || null;
+
+  if (!url && !handle) {
+    throw new BidValidationError("Provide either a URL or an X handle.");
+  }
+  if (url && handle) {
+    throw new BidValidationError("Provide only one of URL or X handle, not both.");
+  }
+
   const category = await getCategoryBySlug(input.categorySlug);
   if (!category) {
     throw new BidValidationError(`Unknown category: ${input.categorySlug}`);
   }
+
+  const description = url ? await fetchUrlDescription(url) : null;
 
   const ds = await getDataSource();
   const repo = ds.getRepository(Bid);
@@ -179,11 +187,9 @@ export async function createPendingBid(input: CreatePendingBidInput): Promise<Bi
     scope: input.scope,
     status: BidStatus.PENDING_PAYMENT,
     categoryId: category.id,
-    url: input.url,
-    handle: input.handle ?? null,
-    title: input.title,
-    description: input.description ?? null,
-    logoUrl: input.logoUrl ?? null,
+    url,
+    handle,
+    description,
     amountCents: input.amountCents,
     periodKey: currentPeriodKeyFor(input.scope),
     paddleTransactionId: null,

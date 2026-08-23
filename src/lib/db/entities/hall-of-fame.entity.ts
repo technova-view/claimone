@@ -13,11 +13,9 @@ export enum HallOfFameScope {
 
 export interface BidSnapshot {
   bidId: string;
-  url: string;
+  url: string | null;
   handle: string | null;
-  title: string;
   description: string | null;
-  logoUrl: string | null;
   amountCents: number;
   categoryId: string;
   categoryName: string;

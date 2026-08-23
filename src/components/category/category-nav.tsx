@@ -16,10 +16,10 @@ export function CategoryNav({
       <Link
         href={`/${scope}`}
         className={cn(
-          "shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+          "shrink-0 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-all",
           !activeSlug
-            ? "border-primary bg-primary text-primary-foreground"
-            : "border-border bg-card text-muted-foreground hover:text-foreground",
+            ? "border-primary bg-primary text-primary-foreground shadow-sm"
+            : "border-border bg-card text-muted-foreground hover:border-primary/30 hover:text-foreground",
         )}
       >
         All
@@ -29,10 +29,10 @@ export function CategoryNav({
           key={category.id}
           href={`/${scope}/${category.slug}`}
           className={cn(
-            "shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+            "shrink-0 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-all",
             activeSlug === category.slug
-              ? "border-primary bg-primary text-primary-foreground"
-              : "border-border bg-card text-muted-foreground hover:text-foreground",
+              ? "border-primary bg-primary text-primary-foreground shadow-sm"
+              : "border-border bg-card text-muted-foreground hover:border-primary/30 hover:text-foreground",
           )}
         >
           {category.name}
