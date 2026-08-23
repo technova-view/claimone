@@ -38,7 +38,7 @@ export async function createBidCheckoutTransaction({
           },
           product: {
             name: `claimone.lol bid — ${title}`,
-            taxCategory: "digital-goods",
+            taxCategory: "standard",
           },
         },
       },
