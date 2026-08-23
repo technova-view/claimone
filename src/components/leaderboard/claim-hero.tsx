@@ -2,9 +2,9 @@
 
 import { useMemo, useState, type FormEvent } from "react";
 import { ArrowUp, AtSign, Globe2, Sparkles, Trophy } from "lucide-react";
-import { useAppModals } from "@/components/app-modals/app-modals-provider";
 import { Button } from "@/components/ui/button";
 import { CategorySelect } from "@/components/category/category-select";
+import { submitBidCheckout } from "@/lib/services/checkout-client";
 import { BidScope } from "@/lib/types/scope";
 import { MIN_BID_CENTS, MIN_RAISE_TO_TAKE_TOP_CENTS } from "@/lib/config/bid-config";
 import { cn } from "@/lib/utils";
@@ -81,11 +81,12 @@ export function ClaimHero({
   rowsByScope: Record<BidScope, LeaderboardRow[]>;
   categories: { slug: string; name: string }[];
 }) {
-  const { openClaim } = useAppModals();
   const [scope, setScope] = useState<BidScope>(BidScope.ALL_TIME);
   const [categorySlug, setCategorySlug] = useState("");
   const [value, setValue] = useState("");
   const [amountCents, setAmountCents] = useState(() => minPriceFor(rowsByScope[BidScope.ALL_TIME], ""));
+  const [status, setStatus] = useState<"idle" | "submitting">("idle");
+  const [error, setError] = useState<string | null>(null);
 
   const rows = rowsByScope[scope];
   const categoryRows = useMemo(
@@ -114,7 +115,7 @@ export function ClaimHero({
     setAmountCents((current) => Math.max(MIN_BID_CENTS, current + deltaDollars * 100));
   }
 
-  function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     const trimmed = value.trim();
     if (!trimmed || !categorySlug) return;
@@ -122,14 +123,20 @@ export function ClaimHero({
     const looksLikeUrl = trimmed.startsWith("@") ? false : trimmed.includes(".") || trimmed.startsWith("http");
     const linkType = looksLikeUrl ? "url" : "handle";
 
-    openClaim({
+    setError(null);
+    setStatus("submitting");
+    const result = await submitBidCheckout({
       scope,
       categorySlug,
       amountCents,
-      locked: false,
-      prefillValue: linkType === "handle" ? trimmed.replace(/^@/, "") : trimmed,
-      prefillLinkType: linkType,
+      ...(linkType === "handle" ? { handle: trimmed.replace(/^@/, "") } : { url: trimmed }),
     });
+    if (!result.ok) {
+      setError(result.error);
+      setStatus("idle");
+      return;
+    }
+    setStatus("idle");
   }
 
   return (
@@ -271,8 +278,10 @@ export function ClaimHero({
             </p>
           </div>
 
-          <Button type="submit" size="lg" disabled={!value.trim() || !categorySlug}>
-            {takesTop ? "Claim #1" : "Submit bid"}
+          {error && <p className="text-sm text-destructive">{error}</p>}
+
+          <Button type="submit" size="lg" disabled={!value.trim() || !categorySlug || status === "submitting"}>
+            {status === "submitting" ? "Preparing checkout…" : takesTop ? "Claim #1" : "Submit bid"}
           </Button>
           <p className="text-xs text-muted-foreground">Already on the list? Enter the same URL or @handle and up your bid.</p>
         </form>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { BidScope } from "@/lib/types/scope";
-import { openPaddleCheckout } from "@/lib/paddle/client";
+import { submitBidCheckout } from "@/lib/services/checkout-client";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -85,30 +85,18 @@ function ClaimModalForm({
     }
 
     setStatus("submitting");
-    try {
-      const res = await fetch("/api/checkout/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          scope,
-          categorySlug,
-          amountCents,
-          ...(linkType === "url" ? { url: value.trim() } : { handle: value.trim() }),
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Something went wrong.");
-        setStatus("idle");
-        return;
-      }
-
-      onOpenChange(false);
-      await openPaddleCheckout(data.transactionId);
-    } catch {
-      setError("Something went wrong. Please try again.");
+    const result = await submitBidCheckout({
+      scope,
+      categorySlug,
+      amountCents,
+      ...(linkType === "url" ? { url: value.trim() } : { handle: value.trim() }),
+    });
+    if (!result.ok) {
+      setError(result.error);
       setStatus("idle");
+      return;
     }
+    onOpenChange(false);
   }
 
   return (
