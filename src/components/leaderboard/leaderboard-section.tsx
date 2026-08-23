@@ -67,7 +67,7 @@ export function LeaderboardSection({
 
   return (
     <section id="leaderboard" className="scroll-mt-24 flex flex-col gap-5">
-      <div className="flex flex-col items-center gap-2">
+      <div className="flex flex-col items-center gap-5">
         <div className="flex gap-1 rounded-full border border-border bg-secondary p-1">
           {SCOPE_OPTIONS.map((opt) => (
             <button

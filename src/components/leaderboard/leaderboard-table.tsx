@@ -166,14 +166,9 @@ export function LeaderboardTable({
                       <span className="block truncate font-medium transition-colors group-hover:text-primary">
                         {label}
                       </span>
-                      <span
-                        className={cn(
-                          "block truncate text-xs text-muted-foreground",
-                          !row.description && "invisible",
-                        )}
-                      >
-                        {row.description || "—"}
-                      </span>
+                      {row.description && (
+                        <span className="block truncate text-xs text-muted-foreground">{row.description}</span>
+                      )}
                       <MetaLine
                         createdAt={row.createdAt}
                         id={row.id}
@@ -262,9 +257,9 @@ function TopThreeRow({ row, showCategory }: { row: LeaderboardRow; showCategory:
           full card width from the left edge. */}
       <div className="min-w-0 flex-1 pr-24">
         <span className="block truncate font-semibold transition-colors group-hover:text-primary">{label}</span>
-        <span className={cn("line-clamp-2 min-h-10 text-sm text-muted-foreground", !row.description && "invisible")}>
-          {row.description || "—"}
-        </span>
+        {row.description && (
+          <span className="line-clamp-2 text-sm text-muted-foreground">{row.description}</span>
+        )}
         {/* Cancels the column's own pr-24 (reserved so the longer title/
             description never run under the price) — the meta line is short
             enough to safely extend into that gutter, letting "see details"
