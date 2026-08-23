@@ -84,7 +84,7 @@ export function LeaderboardSection({
         </div>
       </div>
 
-      <div id="categories" className="scroll-mt-24 flex items-center justify-center gap-2">
+      <div id="categories" className="scroll-mt-24 flex min-w-0 items-center gap-2">
         <CategoryFilterPills categories={categories} activeSlug={categorySlug} onChange={handleCategoryChange} />
         {isLoading && <Loader2 className="size-4 shrink-0 animate-spin text-muted-foreground" aria-hidden />}
       </div>
