@@ -19,7 +19,11 @@ export function getPaddleClient(): Promise<Paddle | undefined> {
   return paddleInstancePromise;
 }
 
-export async function openPaddleCheckout(transactionId: string): Promise<void> {
+export async function openPaddleCheckout(transactionId: string, successUrl?: string): Promise<void> {
   const paddle = await getPaddleClient();
-  paddle?.Checkout.open({ transactionId });
+  // Without a successUrl, Paddle's overlay shows its own "paid" state and
+  // then just... sits there until the visitor manually closes it. Setting
+  // this makes Paddle redirect the browser itself once payment completes,
+  // which is what actually dismisses the overlay.
+  paddle?.Checkout.open({ transactionId, settings: successUrl ? { successUrl } : undefined });
 }

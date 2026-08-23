@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/site/site-header";
 import { ProductPageActions } from "@/components/product/product-page-actions";
-import { getLeaderboard } from "@/lib/services/bidding.service";
+import { getLeaderboard, hasPendingBidMatchingSlug } from "@/lib/services/bidding.service";
 import { BidScope } from "@/lib/db/entities/bid.entity";
 import { slugForListing } from "@/lib/services/product-slug";
 import { displayHostFor, faviconUrlFor, outboundLinkFor, timeAgo, xAvatarUrlFor } from "@/lib/services/link-display";
@@ -35,7 +35,29 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const data = await loadListing(slug);
-  if (!data) notFound();
+
+  if (!data) {
+    // Checkout redirects here the instant Paddle confirms payment, but the
+    // webhook that actually activates the bid runs separately and can lag a
+    // second or two behind — so "not found yet" isn't always "doesn't
+    // exist." A pending match gets a brief wait instead of a hard 404.
+    if (await hasPendingBidMatchingSlug(slug)) {
+      return (
+        <div className="flex flex-1 flex-col">
+          <SiteHeader />
+          <meta httpEquiv="refresh" content="3" />
+          <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-3 px-6 py-24 text-center">
+            <h1 className="text-xl font-semibold">Confirming your payment…</h1>
+            <p className="text-sm text-muted-foreground">
+              This usually takes just a few seconds — this page will refresh on its own.
+            </p>
+          </main>
+        </div>
+      );
+    }
+    notFound();
+  }
+
   const { row, overallTotal, categoryRank, categoryTotal } = data;
 
   const label = row.handle ? `@${row.handle}` : row.url ? displayHostFor(row.url) : "";

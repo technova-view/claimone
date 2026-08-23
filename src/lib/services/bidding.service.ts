@@ -3,6 +3,7 @@ import { Bid, BidScope, BidStatus } from "@/lib/db/entities/bid.entity";
 import { getCategoryBySlug } from "@/lib/services/category.service";
 import { getDailyKey, getWeeklyKey } from "@/lib/services/period";
 import { fetchUrlDescription } from "@/lib/services/link-metadata.service";
+import { slugForListing } from "@/lib/services/product-slug";
 import {
   MAX_BID_CENTS,
   MIN_BID_CENTS,
@@ -228,4 +229,19 @@ export async function activateBid(bidId: string, paddleTransactionId: string): P
 export async function getBidById(bidId: string): Promise<Bid | null> {
   const ds = await getDataSource();
   return ds.getRepository(Bid).findOne({ where: { id: bidId } });
+}
+
+// Checkout redirects the browser back the moment Paddle confirms payment,
+// but activation happens separately via the async webhook — so a bid can
+// briefly exist as PENDING_PAYMENT after the buyer is already looking at
+// its product page. Used to tell "not paid yet" apart from "doesn't exist"
+// so that moment shows a short wait instead of a 404.
+export async function hasPendingBidMatchingSlug(slug: string): Promise<boolean> {
+  const ds = await getDataSource();
+  const recentPending = await ds.getRepository(Bid).find({
+    where: { scope: BidScope.ALL_TIME, status: BidStatus.PENDING_PAYMENT },
+    order: { createdAt: "DESC" },
+    take: 50,
+  });
+  return recentPending.some((bid) => slugForListing(bid).toLowerCase() === slug.toLowerCase());
 }

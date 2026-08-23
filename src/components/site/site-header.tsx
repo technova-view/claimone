@@ -7,7 +7,7 @@ import { useTheme } from "next-themes";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 const NAV_LINKS = [
-  { href: "/#leaderboard", label: "Leaderboard" },
+  { href: "/", label: "Leaderboard" },
   { href: "/#categories", label: "Categories" },
   { href: "/about", label: "About" },
   { href: "/rules", label: "Rules" },

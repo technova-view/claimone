@@ -1,6 +1,7 @@
 "use client";
 
 import { openPaddleCheckout } from "@/lib/paddle/client";
+import { slugForListing } from "@/lib/services/product-slug";
 import type { BidScope } from "@/lib/types/scope";
 
 export interface SubmitBidInput {
@@ -27,7 +28,9 @@ export async function submitBidCheckout(input: SubmitBidInput): Promise<SubmitBi
     if (!res.ok) {
       return { ok: false, error: data.error ?? "Something went wrong." };
     }
-    await openPaddleCheckout(data.transactionId);
+    const slug = slugForListing({ url: input.url ?? null, handle: input.handle ?? null });
+    const successUrl = slug ? `${window.location.origin}/product/${slug}` : undefined;
+    await openPaddleCheckout(data.transactionId, successUrl);
     return { ok: true };
   } catch {
     return { ok: false, error: "Something went wrong. Please try again." };
