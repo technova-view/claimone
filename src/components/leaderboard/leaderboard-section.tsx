@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { BidScope } from "@/lib/types/scope";
 import { slugFromScope } from "@/lib/services/scope-slug";
 import { CategoryFilterPills } from "@/components/category/category-filter-pills";
+import { Countdown } from "@/components/leaderboard/countdown";
 import { LeaderboardTable } from "@/components/leaderboard/leaderboard-table";
 import { cn } from "@/lib/utils";
 import type { LeaderboardRow } from "@/lib/types/leaderboard";
@@ -66,7 +67,7 @@ export function LeaderboardSection({
 
   return (
     <section id="leaderboard" className="scroll-mt-24 flex flex-col gap-5">
-      <div className="flex justify-center">
+      <div className="flex flex-col items-center gap-2">
         <div className="flex gap-1 rounded-full border border-border bg-secondary p-1">
           {SCOPE_OPTIONS.map((opt) => (
             <button
@@ -82,6 +83,7 @@ export function LeaderboardSection({
             </button>
           ))}
         </div>
+        {scope !== BidScope.ALL_TIME && <Countdown scope={scope === BidScope.DAILY ? "daily" : "weekly"} />}
       </div>
 
       <div id="categories" className="scroll-mt-24 flex min-w-0 items-center gap-2">

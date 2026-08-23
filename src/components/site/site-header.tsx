@@ -31,19 +31,21 @@ export function SiteHeader() {
           <Image src={logoSrc} alt="ClaimOne" width={1030} height={370} className="h-16 w-auto" priority />
         </Link>
 
-        <nav className="flex items-center gap-1">
-          {NAV_LINKS.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="rounded-full px-3.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {link.label}
-            </a>
-          ))}
-        </nav>
+        <div className="flex items-center gap-4">
+          <nav className="flex items-center gap-1">
+            {NAV_LINKS.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="rounded-full px-3.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
 
-        <ThemeToggle />
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   );

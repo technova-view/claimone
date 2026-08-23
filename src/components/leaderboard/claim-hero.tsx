@@ -4,6 +4,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { ArrowUp, AtSign, Globe2, Sparkles, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CategorySelect } from "@/components/category/category-select";
+import { Countdown } from "@/components/leaderboard/countdown";
 import { submitBidCheckout } from "@/lib/services/checkout-client";
 import { BidScope } from "@/lib/types/scope";
 import { MIN_BID_CENTS, MIN_RAISE_TO_TAKE_TOP_CENTS } from "@/lib/config/bid-config";
@@ -168,6 +169,10 @@ export function ClaimHero({
               ))}
             </div>
           </div>
+
+          {scope !== BidScope.ALL_TIME && (
+            <Countdown className="self-end" scope={scope === BidScope.DAILY ? "daily" : "weekly"} />
+          )}
 
           <ol className="flex flex-col gap-1 font-mono text-sm tabular-nums">
             {ledger.top.map((row, i) => (

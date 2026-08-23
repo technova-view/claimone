@@ -1,4 +1,5 @@
 import { SiteHeader } from "@/components/site/site-header";
+import { StatusBar } from "@/components/site/status-bar";
 import { ClaimHero } from "@/components/leaderboard/claim-hero";
 import { LeaderboardSection } from "@/components/leaderboard/leaderboard-section";
 import { getLeaderboard } from "@/lib/services/bidding.service";
@@ -18,7 +19,8 @@ export default async function HomePage() {
   return (
     <div className="flex flex-1 flex-col">
       <SiteHeader />
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-10 px-6 py-8">
+      <StatusBar />
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-10 px-6 pb-8 pt-2">
         <ClaimHero
           rowsByScope={{
             [BidScope.ALL_TIME]: allTimeRows,

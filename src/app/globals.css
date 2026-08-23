@@ -126,5 +126,11 @@
   }
   html {
     @apply font-sans;
+    /* Reserves the scrollbar's width permanently, whether or not the page
+       actually needs to scroll — without this, content height changes that
+       cross the scroll threshold (e.g. switching to a shorter category)
+       make the scrollbar appear/disappear and shift the whole page
+       horizontally. */
+    scrollbar-gutter: stable;
   }
 }
