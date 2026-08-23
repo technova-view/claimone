@@ -29,3 +29,25 @@ export function outboundLinkFor(bid: { url: string | null; handle: string | null
   if (bid.handle) return `https://x.com/${bid.handle.replace(/^@/, "")}`;
   return "#";
 }
+
+const TIME_AGO_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
+  ["year", 60 * 60 * 24 * 365],
+  ["month", 60 * 60 * 24 * 30],
+  ["week", 60 * 60 * 24 * 7],
+  ["day", 60 * 60 * 24],
+  ["hour", 60 * 60],
+  ["minute", 60],
+];
+
+const timeAgoFormatter = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+
+export function timeAgo(iso: string): string {
+  const seconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
+  if (seconds < 60) return "just now";
+  for (const [unit, unitSeconds] of TIME_AGO_UNITS) {
+    if (seconds >= unitSeconds) {
+      return timeAgoFormatter.format(-Math.floor(seconds / unitSeconds), unit);
+    }
+  }
+  return "just now";
+}

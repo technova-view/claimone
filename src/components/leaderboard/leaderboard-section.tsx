@@ -1,69 +1,106 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Trophy } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { BidScope } from "@/lib/types/scope";
 import { slugFromScope } from "@/lib/services/scope-slug";
 import { CategoryFilterPills } from "@/components/category/category-filter-pills";
 import { LeaderboardTable } from "@/components/leaderboard/leaderboard-table";
-import { Countdown } from "@/components/leaderboard/countdown";
-import { Button } from "@/components/ui/button";
-import { useAppModals } from "@/components/app-modals/app-modals-provider";
+import { cn } from "@/lib/utils";
 import type { LeaderboardRow } from "@/lib/types/leaderboard";
 
-const SCOPE_LABEL: Record<BidScope, string> = {
-  [BidScope.ALL_TIME]: "All-time leaderboard",
-  [BidScope.DAILY]: "Daily leaderboard",
-  [BidScope.WEEKLY]: "Weekly leaderboard",
-};
+const SCOPE_OPTIONS: { value: BidScope; label: string }[] = [
+  { value: BidScope.ALL_TIME, label: "All time" },
+  { value: BidScope.DAILY, label: "Daily" },
+  { value: BidScope.WEEKLY, label: "Weekly" },
+];
 
 export function LeaderboardSection({
-  scope,
-  initialRows,
+  initialRowsByScope,
   categories,
 }: {
-  scope: BidScope;
-  initialRows: LeaderboardRow[];
+  initialRowsByScope: Record<BidScope, LeaderboardRow[]>;
   categories: { slug: string; name: string }[];
 }) {
+  const [scope, setScope] = useState<BidScope>(BidScope.ALL_TIME);
   const [categorySlug, setCategorySlug] = useState<string | null>(null);
   const [filteredRows, setFilteredRows] = useState<LeaderboardRow[] | null>(null);
-  const { openHallOfFame } = useAppModals();
+  // The key of the filter that filteredRows currently reflects. When it
+  // doesn't match the filter the user has selected, a fetch is in flight —
+  // derived rather than a separate boolean so there's no state to fall out
+  // of sync with what's actually been fetched.
+  const [resolvedKey, setResolvedKey] = useState<string | null>(null);
   const scopeSlug = slugFromScope(scope);
-  const hasHallOfFame = scope === BidScope.DAILY || scope === BidScope.WEEKLY;
-  const rows = categorySlug === null ? initialRows : (filteredRows ?? initialRows);
+  const desiredKey = categorySlug === null ? null : `${scopeSlug}:${categorySlug}`;
+  const isLoading = desiredKey !== null && desiredKey !== resolvedKey;
+  const rows = categorySlug === null ? initialRowsByScope[scope] : (filteredRows ?? initialRowsByScope[scope]);
 
   useEffect(() => {
-    if (categorySlug === null) return;
+    if (desiredKey === null || categorySlug === null) return;
+    let cancelled = false;
     const params = new URLSearchParams({ scope: scopeSlug, category: categorySlug });
     fetch(`/api/leaderboard?${params}`)
       .then((res) => res.json())
-      .then(setFilteredRows);
-  }, [categorySlug, scopeSlug]);
+      .then((data) => {
+        if (cancelled) return;
+        setFilteredRows(data);
+        setResolvedKey(desiredKey);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [desiredKey, scopeSlug, categorySlug]);
+
+  function handleScopeChange(next: BidScope) {
+    setScope(next);
+    setCategorySlug(null);
+    setFilteredRows(null);
+    setResolvedKey(null);
+  }
+
+  function handleCategoryChange(next: string | null) {
+    setCategorySlug(next);
+    setFilteredRows(null);
+    setResolvedKey(null);
+  }
 
   return (
-    <section id={scopeSlug} className="scroll-mt-24 flex flex-col gap-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-sm font-medium text-primary">
-            {categories.find((c) => c.slug === categorySlug)?.name ?? "All categories"}
-          </p>
-          <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">{SCOPE_LABEL[scope]}</h2>
-        </div>
-        <div className="flex items-center gap-2">
-          {hasHallOfFame && (
-            <Button variant="ghost" size="sm" onClick={() => openHallOfFame(scope === BidScope.DAILY ? "daily" : "weekly")}>
-              <Trophy className="size-4" data-icon="inline-start" />
-              Hall of Fame
-            </Button>
-          )}
-          {scope !== BidScope.ALL_TIME && (
-            <Countdown scope={scope === BidScope.DAILY ? "daily" : "weekly"} />
-          )}
+    <section id="leaderboard" className="scroll-mt-24 flex flex-col gap-5">
+      <div className="flex justify-center">
+        <div className="flex gap-1 rounded-full border border-border bg-secondary p-1">
+          {SCOPE_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => handleScopeChange(opt.value)}
+              className={cn(
+                "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
+                scope === opt.value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       </div>
-      <CategoryFilterPills categories={categories} activeSlug={categorySlug} onChange={setCategorySlug} />
-      <LeaderboardTable rows={rows} scope={scope} categorySlug={categorySlug ?? undefined} />
+
+      <div id="categories" className="scroll-mt-24 flex items-center justify-center gap-2">
+        <CategoryFilterPills categories={categories} activeSlug={categorySlug} onChange={handleCategoryChange} />
+        {isLoading && <Loader2 className="size-4 shrink-0 animate-spin text-muted-foreground" aria-hidden />}
+      </div>
+
+      <div
+        className={cn("transition-opacity duration-150", isLoading && "opacity-60")}
+        aria-live="polite"
+        aria-busy={isLoading}
+      >
+        <LeaderboardTable
+          key={`${scope}:${categorySlug ?? "all"}`}
+          rows={rows}
+          scope={scope}
+          categorySlug={categorySlug ?? undefined}
+        />
+      </div>
     </section>
   );
 }

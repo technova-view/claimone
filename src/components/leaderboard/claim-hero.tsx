@@ -1,0 +1,282 @@
+"use client";
+
+import { useMemo, useState, type FormEvent } from "react";
+import { ArrowUp, AtSign, Globe2, Sparkles, Trophy } from "lucide-react";
+import { useAppModals } from "@/components/app-modals/app-modals-provider";
+import { Button } from "@/components/ui/button";
+import { CategorySelect } from "@/components/category/category-select";
+import { BidScope } from "@/lib/types/scope";
+import { MIN_BID_CENTS, MIN_RAISE_TO_TAKE_TOP_CENTS } from "@/lib/config/bid-config";
+import { cn } from "@/lib/utils";
+import type { LeaderboardRow } from "@/lib/types/leaderboard";
+
+const SCOPE_OPTIONS: { value: BidScope; label: string }[] = [
+  { value: BidScope.ALL_TIME, label: "All time" },
+  { value: BidScope.DAILY, label: "Daily" },
+  { value: BidScope.WEEKLY, label: "Weekly" },
+];
+
+function formatAmount(cents: number): string {
+  return `$${(cents / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+}
+
+function topAmountFor(rows: LeaderboardRow[], categorySlug: string): number {
+  return rows
+    .filter((row) => !categorySlug || row.categorySlug === categorySlug)
+    .reduce((max, row) => Math.max(max, row.amountCents), 0);
+}
+
+function minPriceFor(rows: LeaderboardRow[], categorySlug: string): number {
+  const top = topAmountFor(rows, categorySlug);
+  return top > 0 ? top + MIN_RAISE_TO_TAKE_TOP_CENTS : MIN_BID_CENTS;
+}
+
+type LedgerRow = { kind: "row" | "ghost"; rank: number; amountCents: number; label?: string };
+
+const TOP_N = 3;
+
+// Top 3, with the bidder's own (not-yet-submitted) amount inserted at the
+// rank it would actually take if it lands in that top 3. If it doesn't,
+// the top 3 stays real and the caller shows the ghost rank as a one-line
+// note instead of stretching the list to fit it.
+//
+// `top` is always exactly TOP_N slots (padded with null) so the panel's
+// height never changes when a category has fewer bidders — the caller
+// renders null slots as invisible placeholders rather than omitting them.
+function buildLedger(categoryRows: LeaderboardRow[], amountCents: number, ghostLabel: string) {
+  const sorted = [...categoryRows].sort((a, b) => b.amountCents - a.amountCents);
+  const insertIndex = sorted.findIndex((r) => r.amountCents < amountCents);
+  const idx = insertIndex === -1 ? sorted.length : insertIndex;
+  const ghostRank = idx + 1;
+
+  const combined: LedgerRow[] = [
+    ...sorted.slice(0, idx).map((r, i) => ({ kind: "row" as const, rank: i + 1, amountCents: r.amountCents })),
+    { kind: "ghost" as const, rank: ghostRank, amountCents, label: ghostLabel.trim() || "Your bid" },
+    ...sorted.slice(idx).map((r, i) => ({ kind: "row" as const, rank: idx + i + 2, amountCents: r.amountCents })),
+  ];
+
+  const topSlice = combined.slice(0, TOP_N);
+  const top: (LedgerRow | null)[] = Array.from({ length: TOP_N }, (_, i) => topSlice[i] ?? null);
+  const ghostInTop = ghostRank <= TOP_N;
+  // only meaningful when the ghost missed the top N — the $ short of 3rd place
+  const amountToEnterTop = !ghostInTop ? sorted[TOP_N - 1].amountCents - amountCents + 100 : 0;
+
+  return {
+    top,
+    ghostRank,
+    ghostInTop,
+    total: combined.length,
+    isEmpty: categoryRows.length === 0,
+    amountToEnterTop,
+  };
+}
+
+const stepperClass =
+  "flex size-8 shrink-0 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary disabled:pointer-events-none disabled:opacity-40";
+
+export function ClaimHero({
+  rowsByScope,
+  categories,
+}: {
+  rowsByScope: Record<BidScope, LeaderboardRow[]>;
+  categories: { slug: string; name: string }[];
+}) {
+  const { openClaim } = useAppModals();
+  const [scope, setScope] = useState<BidScope>(BidScope.ALL_TIME);
+  const [categorySlug, setCategorySlug] = useState("");
+  const [value, setValue] = useState("");
+  const [amountCents, setAmountCents] = useState(() => minPriceFor(rowsByScope[BidScope.ALL_TIME], ""));
+
+  const rows = rowsByScope[scope];
+  const categoryRows = useMemo(
+    () => rows.filter((r) => !categorySlug || r.categorySlug === categorySlug),
+    [rows, categorySlug],
+  );
+  const topCents = topAmountFor(rows, categorySlug);
+  const takesTop = amountCents >= (topCents > 0 ? topCents + MIN_RAISE_TO_TAKE_TOP_CENTS : MIN_BID_CENTS);
+  const looksLikeHandle = value.trim().startsWith("@");
+  const ledger = useMemo(
+    () => buildLedger(categoryRows, amountCents, value.trim()),
+    [categoryRows, amountCents, value],
+  );
+
+  function handleScopeChange(nextScope: BidScope) {
+    setScope(nextScope);
+    setAmountCents(minPriceFor(rowsByScope[nextScope], categorySlug));
+  }
+
+  function handleCategoryChange(slug: string) {
+    setCategorySlug(slug);
+    setAmountCents(minPriceFor(rows, slug));
+  }
+
+  function step(deltaDollars: number) {
+    setAmountCents((current) => Math.max(MIN_BID_CENTS, current + deltaDollars * 100));
+  }
+
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    const trimmed = value.trim();
+    if (!trimmed || !categorySlug) return;
+
+    const looksLikeUrl = trimmed.startsWith("@") ? false : trimmed.includes(".") || trimmed.startsWith("http");
+    const linkType = looksLikeUrl ? "url" : "handle";
+
+    openClaim({
+      scope,
+      categorySlug,
+      amountCents,
+      locked: false,
+      prefillValue: linkType === "handle" ? trimmed.replace(/^@/, "") : trimmed,
+      prefillLinkType: linkType,
+    });
+  }
+
+  return (
+    <section className="flex flex-col gap-4 py-4">
+      <div className="rounded-2xl border border-border md:grid md:grid-cols-[1.05fr_1fr]">
+        {/* Ledger pane — category select doubles as the panel's own title */}
+        <div className="flex flex-col gap-3 rounded-t-2xl border-b border-border bg-secondary/30 p-5 md:rounded-t-none md:rounded-l-2xl md:border-b-0 md:border-r">
+          <div className="flex items-center justify-between gap-3">
+            <CategorySelect
+              categories={categories}
+              value={categorySlug}
+              onChange={handleCategoryChange}
+              variant="ghost"
+              className="min-w-0"
+            />
+            <div className="flex shrink-0 gap-0.5 rounded-md border border-border bg-background p-0.5 text-xs">
+              {SCOPE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => handleScopeChange(opt.value)}
+                  className={cn(
+                    "rounded px-2 py-1 font-medium transition-colors",
+                    scope === opt.value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <ol className="flex flex-col gap-1 font-mono text-sm tabular-nums">
+            {ledger.top.map((row, i) => (
+              <li
+                key={i}
+                className={cn(
+                  "flex items-center gap-2.5 rounded-md border px-2 py-1.5",
+                  !row && "invisible",
+                  row && row.kind === "ghost"
+                    ? "border-dashed border-primary bg-primary/5"
+                    : "border-transparent text-muted-foreground",
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex size-6 shrink-0 items-center justify-center rounded-md text-[11px] font-semibold",
+                    row && row.kind === "ghost" ? "bg-primary text-primary-foreground" : "bg-secondary",
+                  )}
+                >
+                  #{row?.rank ?? i + 1}
+                </span>
+                <span
+                  className={cn(
+                    "min-w-0 flex-1 truncate",
+                    row && row.kind === "ghost" && "font-semibold text-foreground",
+                  )}
+                >
+                  {row && row.kind === "ghost" ? row.label : formatAmount(row?.amountCents ?? 0)}
+                </span>
+                {row && row.kind === "ghost" && (
+                  <span className="shrink-0 text-foreground">{formatAmount(row.amountCents)}</span>
+                )}
+              </li>
+            ))}
+          </ol>
+
+          <p
+            className={cn(
+              "flex w-fit items-center gap-1.5 text-xs",
+              ledger.isEmpty
+                ? "rounded-full bg-primary/10 px-2.5 py-1 font-medium text-primary"
+                : !ledger.ghostInTop
+                  ? "font-medium text-primary"
+                  : "text-foreground/70",
+            )}
+          >
+            {ledger.isEmpty && <Sparkles className="size-3.5 shrink-0" />}
+
+            {ledger.isEmpty ? (
+              "No bids here yet — be the first to claim #1."
+            ) : ledger.ghostInTop ? (
+              <>
+                <Trophy className="size-3.5 shrink-0 text-primary" />
+                  <span className="text-primary font-medium">
+                  {ledger.total} bids competing for the top.
+                </span>
+              </>
+            ) : (
+              <>
+                <ArrowUp className="size-3.5 shrink-0" />
+                {`Rank #${ledger.ghostRank} of ${ledger.total} — add ${formatAmount(
+                  ledger.amountToEnterTop,
+                )} to reach the top ${TOP_N}.`}
+              </>
+            )}
+          </p>
+        </div>
+
+        {/* Form pane */}
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col justify-center gap-4 rounded-b-2xl p-5 md:rounded-b-none md:rounded-r-2xl"
+        >
+          <div className="relative">
+            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+              {looksLikeHandle ? <AtSign className="size-4" /> : <Globe2 className="size-4" />}
+            </span>
+            <input
+              type="text"
+              required
+              placeholder="Your product URL or @handle"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              className="w-full rounded-xl border border-input bg-background py-2.5 pl-9 pr-3.5 text-sm outline-none transition-shadow focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Your bid</span>
+              {takesTop && (
+                <span className="text-xs font-medium text-primary">{ledger.isEmpty ? "Be the first" : "Takes #1"}</span>
+              )}
+            </div>
+            <div className="mt-1.5 flex items-center gap-2">
+              <button type="button" onClick={() => step(-1)} disabled={amountCents <= MIN_BID_CENTS} className={stepperClass} aria-label="Decrease amount">
+                −
+              </button>
+              <span className="min-w-[8ch] flex-1 rounded-md border border-input bg-background py-1.5 text-center font-mono text-xl font-bold tabular-nums text-primary">
+                {formatAmount(amountCents)}
+              </span>
+              <button type="button" onClick={() => step(1)} className={stepperClass} aria-label="Increase amount">
+                +
+              </button>
+            </div>
+            <p className={cn("mt-1.5 text-xs text-muted-foreground", categorySlug && "invisible")}>
+              Pick a category to place this bid.
+            </p>
+          </div>
+
+          <Button type="submit" size="lg" disabled={!value.trim() || !categorySlug}>
+            {takesTop ? "Claim #1" : "Submit bid"}
+          </Button>
+          <p className="text-xs text-muted-foreground">Already on the list? Enter the same URL or @handle and up your bid.</p>
+        </form>
+      </div>
+    </section>
+  );
+}

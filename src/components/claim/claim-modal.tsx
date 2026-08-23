@@ -2,7 +2,6 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { BidScope } from "@/lib/types/scope";
-import { slugFromScope } from "@/lib/services/scope-slug";
 import { openPaddleCheckout } from "@/lib/paddle/client";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
@@ -14,13 +13,9 @@ export interface ClaimTarget {
   amountCents: number;
   locked: boolean;
   competitorLabel?: string;
+  prefillValue?: string;
+  prefillLinkType?: "url" | "handle";
 }
-
-const SCOPE_OPTIONS: { value: BidScope; label: string }[] = [
-  { value: BidScope.DAILY, label: "Daily" },
-  { value: BidScope.WEEKLY, label: "Weekly" },
-  { value: BidScope.ALL_TIME, label: "All-time" },
-];
 
 const fieldClass =
   "w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm outline-none transition-shadow focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
@@ -54,10 +49,10 @@ function ClaimModalForm({
   onOpenChange: (open: boolean) => void;
 }) {
   const [categories, setCategories] = useState<{ slug: string; name: string }[]>([]);
-  const [scope, setScope] = useState<BidScope>(target.scope);
+  const scope = target.scope;
   const [categorySlug, setCategorySlug] = useState(target.categorySlug);
-  const [linkType, setLinkType] = useState<LinkType>("url");
-  const [value, setValue] = useState("");
+  const [linkType, setLinkType] = useState<LinkType>(target.prefillLinkType ?? "url");
+  const [value, setValue] = useState(target.prefillValue ?? "");
   const [amount, setAmount] = useState((target.amountCents / 100).toString());
   const [status, setStatus] = useState<"idle" | "submitting" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -120,47 +115,28 @@ function ClaimModalForm({
     <Modal open={open} onOpenChange={onOpenChange} title="Claim this spot">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
-          <span className={labelClass}>Leaderboard</span>
+          <span className={labelClass}>Category</span>
           {target.locked ? (
             <div className="rounded-xl border border-border bg-secondary px-3.5 py-2.5 text-sm text-muted-foreground">
-              {SCOPE_OPTIONS.find((s) => s.value === scope)?.label} · {categoryName}
+              {categoryName}
             </div>
           ) : (
-            <>
-              <div className="flex gap-1 rounded-full border border-border bg-secondary p-1">
-                {SCOPE_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setScope(opt.value)}
-                    className={cn(
-                      "flex-1 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
-                      scope === opt.value
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-              <select
-                className={fieldClass}
-                value={categorySlug}
-                onChange={(e) => setCategorySlug(e.target.value)}
-              >
-                {categories.map((c) => (
-                  <option key={c.slug} value={c.slug}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </>
+            <select
+              className={fieldClass}
+              value={categorySlug}
+              onChange={(e) => setCategorySlug(e.target.value)}
+            >
+              {categories.map((c) => (
+                <option key={c.slug} value={c.slug}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
           )}
           {target.locked && target.competitorLabel && (
             <p className="text-xs text-muted-foreground">
-              You&rsquo;ll rank above <span className="font-medium text-foreground">{target.competitorLabel}</span> on
-              the {slugFromScope(scope)} · {categoryName} leaderboard.
+              You&rsquo;ll rank above <span className="font-medium text-foreground">{target.competitorLabel}</span> in
+              the {categoryName} leaderboard.
             </p>
           )}
         </div>
@@ -206,16 +182,34 @@ function ClaimModalForm({
           <label className={labelClass} htmlFor="claim-amount">
             Bid amount (USD)
           </label>
-          <input
-            id="claim-amount"
-            type="number"
-            min="1"
-            step="1"
-            required
-            className={fieldClass}
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-          />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setAmount((current) => String(Math.max(1, Math.round(Number(current) || 0) - 1)))}
+              className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-secondary text-muted-foreground transition-colors hover:border-primary/30 hover:text-foreground"
+              aria-label="Decrease bid amount"
+            >
+              −
+            </button>
+            <input
+              id="claim-amount"
+              type="number"
+              min="1"
+              step="1"
+              required
+              className={cn(fieldClass, "text-center font-mono")}
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={() => setAmount((current) => String(Math.round(Number(current) || 0) + 1))}
+              className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-secondary text-muted-foreground transition-colors hover:border-primary/30 hover:text-foreground"
+              aria-label="Increase bid amount"
+            >
+              +
+            </button>
+          </div>
         </div>
 
         {error && <p className="text-sm text-destructive">{error}</p>}
