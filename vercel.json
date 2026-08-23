@@ -1,0 +1,6 @@
+{
+  "crons": [
+    { "path": "/api/cron/rollover-daily", "schedule": "0 0 * * *" },
+    { "path": "/api/cron/rollover-weekly", "schedule": "0 0 * * 1" }
+  ]
+}
