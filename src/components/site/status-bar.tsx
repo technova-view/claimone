@@ -1,21 +1,20 @@
 import Link from "next/link";
 import { ArrowRight, BarChart3, Eye } from "lucide-react";
+import { getAllTimeVisitorTotal, getOnlineRange } from "@/lib/services/stats.service";
+import { OnlineCounter } from "@/components/stats/online-counter";
+import { LiveDot } from "@/components/ui/live-dot";
 
-const ONLINE_COUNT = 612;
-export const VISITOR_COUNT = 1_204_853;
+export async function StatusBar() {
+  const [range, visitorTotal] = await Promise.all([getOnlineRange(), getAllTimeVisitorTotal()]);
 
-export function StatusBar() {
   return (
     <div className="flex justify-center px-4 pt-4 pb-2">
       <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 rounded-full border border-primary/20 bg-card/80 px-5 py-2 text-xs shadow-xs backdrop-blur supports-[backdrop-filter]:bg-card/60">
         {/* Live indicator */}
         <div className="flex items-center gap-2">
-          <div className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-            <span className="relative inline-flex h-full w-full rounded-full bg-green-500" />
-          </div>
+          <LiveDot />
           <span className="font-semibold text-green-600">
-            {ONLINE_COUNT.toLocaleString()}
+            <OnlineCounter min={range.onlineMin} max={range.onlineMax} />
           </span>
           <span className="text-muted-foreground">Online</span>
         </div>
@@ -25,7 +24,7 @@ export function StatusBar() {
         {/* Visitors */}
         <div className="flex items-center gap-1.5 text-muted-foreground">
           <Eye className="h-3.5 w-3.5 opacity-60" />
-          <span>{VISITOR_COUNT.toLocaleString()}</span>
+          <span>{visitorTotal.toLocaleString()}</span>
           <span>visitors since launch</span>
         </div>
 
