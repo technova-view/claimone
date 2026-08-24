@@ -1,5 +1,5 @@
 import type { HallOfFameEntry } from "@/lib/db/entities/hall-of-fame.entity";
-import { displayHostFor, outboundLinkFor } from "@/lib/services/link-display";
+import { displayHostFor } from "@/lib/services/link-display";
 import { ListingAvatar } from "@/components/ui/listing-avatar";
 
 function formatAmount(cents: number): string {
@@ -12,7 +12,7 @@ function EntryCard({ entry, highlight }: { entry: HallOfFameEntry; highlight?: b
 
   return (
     <a
-      href={outboundLinkFor(snap)}
+      href={`/go/${snap.bidId}`}
       target="_blank"
       rel="noopener noreferrer"
       className={

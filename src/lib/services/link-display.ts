@@ -21,6 +21,15 @@ export function xAvatarUrlFor(handle: string): string {
   return `https://unavatar.io/x/${encodeURIComponent(clean)}`;
 }
 
+// Users often paste a bare domain ("example.com") instead of a full URL —
+// normalize to https:// at the point of entry so every stored url is
+// actually parseable by `new URL()` downstream (favicon lookup, metadata
+// fetch, outbound links).
+export function normalizeUrl(raw: string): string {
+  const trimmed = raw.trim();
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
 export function displayHostFor(url: string): string {
   try {
     return new URL(url).hostname.replace(/^www\./, "");

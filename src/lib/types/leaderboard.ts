@@ -11,6 +11,9 @@ export interface LeaderboardRow {
   categoryName: string;
   categorySlug: string;
   createdAt: string;
+  // Real clickCount, plus the admin's boostClicks when the site-wide boost
+  // toggle is on — see getClickBoostEnabled() in stats.service.ts.
+  clicks: number;
 }
 
 export interface LeaderboardQuery {

@@ -21,6 +21,7 @@ interface CreateBidBody {
   amountCents?: number;
   url?: string;
   handle?: string;
+  boostClicks?: number;
 }
 
 export async function POST(request: NextRequest) {
@@ -45,6 +46,7 @@ export async function POST(request: NextRequest) {
       amountCents: body.amountCents,
       url: body.url,
       handle: body.handle,
+      boostClicks: body.boostClicks,
     });
     return NextResponse.json({ id: bid.id });
   } catch (error) {

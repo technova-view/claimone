@@ -1,7 +1,8 @@
 import { getDataSource } from "@/lib/db/data-source";
 import { Bid, BidScope, BidStatus } from "@/lib/db/entities/bid.entity";
 import { getCategoryBySlug } from "@/lib/services/category.service";
-import { BidValidationError, currentPeriodKeyFor } from "@/lib/services/bidding.service";
+import { BidValidationError, currentPeriodKeyFor, dedupeActiveListing } from "@/lib/services/bidding.service";
+import { normalizeUrl } from "@/lib/services/link-display";
 
 export interface AdminBidRow {
   id: string;
@@ -14,6 +15,8 @@ export interface AdminBidRow {
   categoryName: string;
   categorySlug: string;
   isFake: boolean;
+  clickCount: number;
+  boostClicks: number;
   createdAt: string;
 }
 
@@ -46,6 +49,8 @@ export async function listAllBidsForAdmin(params: ListAdminBidsParams = {}): Pro
     categoryName: bid.category.name,
     categorySlug: bid.category.slug,
     isFake: bid.isFake,
+    clickCount: bid.clickCount,
+    boostClicks: bid.boostClicks,
     createdAt: bid.createdAt.toISOString(),
   }));
 }
@@ -116,10 +121,11 @@ interface CreateAdminBidInput {
   amountCents: number;
   url?: string | null;
   handle?: string | null;
+  boostClicks?: number;
 }
 
 export async function createAdminBid(input: CreateAdminBidInput): Promise<Bid> {
-  const url = input.url?.trim() || null;
+  const url = input.url?.trim() ? normalizeUrl(input.url) : null;
   const handle = input.handle?.trim().replace(/^@/, "") || null;
 
   if (!url && !handle) {
@@ -151,8 +157,19 @@ export async function createAdminBid(input: CreateAdminBidInput): Promise<Bid> {
     paddleTransactionId: null,
     activatedAt: new Date(),
     isFake: true,
+    boostClicks: Math.max(0, Math.round(input.boostClicks ?? 0)),
   });
-  return repo.save(bid);
+  const saved = await repo.save(bid);
+
+  await dedupeActiveListing(ds, {
+    scope: saved.scope,
+    periodKey: saved.periodKey,
+    categoryId: saved.categoryId,
+    url: saved.url,
+    handle: saved.handle,
+  });
+
+  return saved;
 }
 
 interface UpdateAdminBidInput {
@@ -162,6 +179,7 @@ interface UpdateAdminBidInput {
   categorySlug?: string;
   scope?: BidScope;
   status?: BidStatus;
+  boostClicks?: number;
 }
 
 export async function updateAdminBid(id: string, input: UpdateAdminBidInput): Promise<Bid> {
@@ -186,7 +204,7 @@ export async function updateAdminBid(id: string, input: UpdateAdminBidInput): Pr
     bid.amountCents = input.amountCents;
   }
   if (input.url !== undefined || input.handle !== undefined) {
-    const url = input.url?.trim() || null;
+    const url = input.url?.trim() ? normalizeUrl(input.url) : null;
     const handle = input.handle?.trim().replace(/^@/, "") || null;
     if (!url && !handle) throw new BidValidationError("Provide either a URL or an X handle.");
     if (url && handle) throw new BidValidationError("Provide only one of URL or X handle, not both.");
@@ -194,8 +212,23 @@ export async function updateAdminBid(id: string, input: UpdateAdminBidInput): Pr
     bid.handle = handle;
   }
   if (input.status) bid.status = input.status;
+  if (input.boostClicks !== undefined) {
+    bid.boostClicks = Math.max(0, Math.round(input.boostClicks));
+  }
 
-  return repo.save(bid);
+  const saved = await repo.save(bid);
+
+  if (saved.status === BidStatus.ACTIVE) {
+    await dedupeActiveListing(ds, {
+      scope: saved.scope,
+      periodKey: saved.periodKey,
+      categoryId: saved.categoryId,
+      url: saved.url,
+      handle: saved.handle,
+    });
+  }
+
+  return saved;
 }
 
 export async function deleteAdminBid(id: string): Promise<void> {

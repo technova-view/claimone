@@ -1,9 +1,11 @@
+import type { DataSource, EntityManager } from "typeorm";
 import { getDataSource } from "@/lib/db/data-source";
 import { Bid, BidScope, BidStatus } from "@/lib/db/entities/bid.entity";
 import { getCategoryBySlug } from "@/lib/services/category.service";
 import { getDailyKey, getWeeklyKey } from "@/lib/services/period";
-import { getFakeItemsEnabled } from "@/lib/services/stats.service";
+import { getClickBoostEnabled, getFakeItemsEnabled } from "@/lib/services/stats.service";
 import { fetchUrlDescription } from "@/lib/services/link-metadata.service";
+import { normalizeUrl } from "@/lib/services/link-display";
 import { slugForListing } from "@/lib/services/product-slug";
 import {
   MAX_BID_CENTS,
@@ -53,7 +55,7 @@ export async function getLeaderboard({ scope, categorySlug }: LeaderboardParams)
 
   qb.orderBy("bid.amountCents", "DESC").addOrderBy("bid.createdAt", "ASC");
 
-  const bids = await qb.getMany();
+  const [bids, clickBoostEnabled] = await Promise.all([qb.getMany(), getClickBoostEnabled()]);
 
   return bids.map((bid, index) => ({
     id: bid.id,
@@ -66,6 +68,7 @@ export async function getLeaderboard({ scope, categorySlug }: LeaderboardParams)
     categoryName: bid.category.name,
     categorySlug: bid.category.slug,
     createdAt: bid.createdAt.toISOString(),
+    clicks: bid.clickCount + (clickBoostEnabled ? bid.boostClicks : 0),
   }));
 }
 
@@ -172,7 +175,7 @@ interface CreatePendingBidInput {
 }
 
 export async function createPendingBid(input: CreatePendingBidInput): Promise<Bid> {
-  const url = input.url?.trim() || null;
+  const url = input.url?.trim() ? normalizeUrl(input.url) : null;
   const handle = input.handle?.trim().replace(/^@/, "") || null;
 
   if (!url && !handle) {
@@ -206,9 +209,69 @@ export async function createPendingBid(input: CreatePendingBidInput): Promise<Bi
   return repo.save(bid);
 }
 
+// One listing (same URL, or same X handle) can't hold two active spots in
+// the same category+scope+period — if a duplicate turns up (a second real
+// purchase, or an admin edit that collides with an existing entry), keep
+// only the highest bidder and delete the rest. Runs against whatever
+// manager/DataSource the caller passes so it can join an existing
+// transaction (activateBid) or run standalone (admin create/edit).
+export async function dedupeActiveListing(
+  manager: DataSource | EntityManager,
+  params: { scope: BidScope; periodKey: string | null; categoryId: string; url: string | null; handle: string | null },
+): Promise<void> {
+  const { scope, periodKey, categoryId, url, handle } = params;
+  if (!url && !handle) return;
+
+  const repo = manager.getRepository(Bid);
+  const qb = repo
+    .createQueryBuilder("bid")
+    .where("bid.scope = :scope", { scope })
+    .andWhere("bid.categoryId = :categoryId", { categoryId })
+    .andWhere("bid.status = :status", { status: BidStatus.ACTIVE });
+
+  if (periodKey === null) {
+    qb.andWhere("bid.periodKey IS NULL");
+  } else {
+    qb.andWhere("bid.periodKey = :periodKey", { periodKey });
+  }
+
+  if (url) {
+    qb.andWhere("LOWER(bid.url) = LOWER(:url)", { url });
+  } else if (handle) {
+    qb.andWhere("LOWER(bid.handle) = LOWER(:handle)", { handle });
+  }
+
+  const matches = await qb.getMany();
+  if (matches.length <= 1) return;
+
+  // Highest bid wins; ties go to whoever claimed it first — same ordering
+  // the public leaderboard uses.
+  matches.sort((a, b) => b.amountCents - a.amountCents || a.createdAt.getTime() - b.createdAt.getTime());
+  const losers = matches.slice(1);
+
+  // Fake (admin-injected) losers are freely deleted. A real, paid loser is
+  // archived instead — it drops off every public leaderboard exactly like a
+  // delete would, but the row (and its paddleTransactionId) survives for
+  // accounting/refund purposes rather than being destroyed outright.
+  const fakeLosers = losers.filter((b) => b.isFake);
+  const realLosers = losers.filter((b) => !b.isFake);
+  if (fakeLosers.length) await repo.remove(fakeLosers);
+  if (realLosers.length) {
+    for (const loser of realLosers) loser.status = BidStatus.ARCHIVED;
+    await repo.save(realLosers);
+  }
+}
+
 export async function setPaddleTransactionId(bidId: string, paddleTransactionId: string): Promise<void> {
   const ds = await getDataSource();
   await ds.getRepository(Bid).update({ id: bidId }, { paddleTransactionId });
+}
+
+// Called by the /go/[id] outbound-link redirect route on every real
+// click-through — a plain atomic increment, no read-then-write race.
+export async function incrementClickCount(bidId: string): Promise<void> {
+  const ds = await getDataSource();
+  await ds.getRepository(Bid).increment({ id: bidId }, "clickCount", 1);
 }
 
 // Only the verified Paddle webhook handler may call this. Idempotent: safe
@@ -229,7 +292,17 @@ export async function activateBid(bidId: string, paddleTransactionId: string): P
     bid.status = BidStatus.ACTIVE;
     bid.activatedAt = new Date();
     bid.paddleTransactionId = paddleTransactionId;
-    return repo.save(bid);
+    const saved = await repo.save(bid);
+
+    await dedupeActiveListing(manager, {
+      scope: saved.scope,
+      periodKey: saved.periodKey,
+      categoryId: saved.categoryId,
+      url: saved.url,
+      handle: saved.handle,
+    });
+
+    return saved;
   });
 }
 

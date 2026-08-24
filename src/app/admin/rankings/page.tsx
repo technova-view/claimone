@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { EyeOff, Pencil, Plus, Trash2 } from "lucide-react";
+import { EyeOff, MousePointerClick, Pencil, Plus, Trash2 } from "lucide-react";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { Button } from "@/components/ui/button";
 import { BidFormModal } from "@/components/admin/bid-form-modal";
@@ -31,6 +31,10 @@ export default function AdminRankingsPage() {
   const [fakeToggleLoading, setFakeToggleLoading] = useState(true);
   const [fakeToggleSaving, setFakeToggleSaving] = useState(false);
 
+  const [clickBoostEnabled, setClickBoostEnabledState] = useState(true);
+  const [boostToggleLoading, setBoostToggleLoading] = useState(true);
+  const [boostToggleSaving, setBoostToggleSaving] = useState(false);
+
   useEffect(() => {
     fetch("/api/categories")
       .then((res) => res.json())
@@ -42,6 +46,13 @@ export default function AdminRankingsPage() {
       .then((res) => res.json())
       .then((data) => setFakeItemsEnabledState(data.enabled ?? true))
       .finally(() => setFakeToggleLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/admin/click-boost-enabled")
+      .then((res) => res.json())
+      .then((data) => setClickBoostEnabledState(data.enabled ?? true))
+      .finally(() => setBoostToggleLoading(false));
   }, []);
 
   async function handleToggleFakeItems() {
@@ -56,6 +67,21 @@ export default function AdminRankingsPage() {
       setFakeItemsEnabledState(next);
     } finally {
       setFakeToggleSaving(false);
+    }
+  }
+
+  async function handleToggleClickBoost() {
+    const next = !clickBoostEnabled;
+    setBoostToggleSaving(true);
+    try {
+      await fetch("/api/admin/click-boost-enabled", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: next }),
+      });
+      setClickBoostEnabledState(next);
+    } finally {
+      setBoostToggleSaving(false);
     }
   }
 
@@ -140,6 +166,36 @@ export default function AdminRankingsPage() {
           </button>
         </div>
 
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3">
+          <div className="flex items-center gap-2">
+            <MousePointerClick className="size-4 text-muted-foreground" />
+            <div>
+              <p className="text-sm font-medium">Click boost visibility</p>
+              <p className="text-xs text-muted-foreground">
+                {clickBoostEnabled
+                  ? "Each item's public click count includes its admin-set boost."
+                  : "Public click counts show real clicks only — boosts are hidden site-wide."}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={clickBoostEnabled}
+            disabled={boostToggleLoading || boostToggleSaving}
+            onClick={handleToggleClickBoost}
+            className={`relative flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 ${
+              clickBoostEnabled ? "bg-primary" : "bg-secondary"
+            }`}
+          >
+            <span
+              className={`inline-block size-4.5 transform rounded-full bg-white shadow transition-transform ${
+                clickBoostEnabled ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </div>
+
         <div className="flex flex-wrap items-center gap-3">
           <select
             value={scopeFilter}
@@ -175,6 +231,7 @@ export default function AdminRankingsPage() {
                 <th className="px-4 py-3">Scope</th>
                 <th className="px-4 py-3">Category</th>
                 <th className="px-4 py-3">Amount</th>
+                <th className="px-4 py-3">Clicks</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Source</th>
                 <th className="px-4 py-3 text-right">Actions</th>
@@ -183,7 +240,7 @@ export default function AdminRankingsPage() {
             <tbody>
               {!loading && rows.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
                     No items match these filters.
                   </td>
                 </tr>
@@ -194,6 +251,10 @@ export default function AdminRankingsPage() {
                   <td className="px-4 py-3 text-muted-foreground">{SCOPE_LABELS[row.scope]}</td>
                   <td className="px-4 py-3 text-muted-foreground">{row.categoryName}</td>
                   <td className="px-4 py-3 font-mono">{formatAmount(row.amountCents)}</td>
+                  <td className="px-4 py-3 font-mono text-muted-foreground">
+                    {row.clickCount.toLocaleString()}
+                    {row.boostClicks > 0 && <span className="text-amber-600 dark:text-amber-400"> (+{row.boostClicks})</span>}
+                  </td>
                   <td className="px-4 py-3 text-muted-foreground">{row.status}</td>
                   <td className="px-4 py-3">
                     <span
