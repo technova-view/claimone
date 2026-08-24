@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trophy } from "lucide-react";
 import { BidScope } from "@/lib/types/scope";
 import { slugFromScope } from "@/lib/services/scope-slug";
 import { CategoryFilterPills } from "@/components/category/category-filter-pills";
 import { Countdown } from "@/components/leaderboard/countdown";
 import { LeaderboardTable } from "@/components/leaderboard/leaderboard-table";
+import { useAppModals } from "@/components/app-modals/app-modals-provider";
 import { cn } from "@/lib/utils";
 import type { LeaderboardRow } from "@/lib/types/leaderboard";
 
@@ -23,6 +24,7 @@ export function LeaderboardSection({
   initialRowsByScope: Record<BidScope, LeaderboardRow[]>;
   categories: { slug: string; name: string }[];
 }) {
+  const { openHallOfFame } = useAppModals();
   const [scope, setScope] = useState<BidScope>(BidScope.ALL_TIME);
   const [categorySlug, setCategorySlug] = useState<string | null>(null);
   const [filteredRows, setFilteredRows] = useState<LeaderboardRow[] | null>(null);
@@ -83,7 +85,19 @@ export function LeaderboardSection({
             </button>
           ))}
         </div>
-        {scope !== BidScope.ALL_TIME && <Countdown scope={scope === BidScope.DAILY ? "daily" : "weekly"} />}
+        {scope !== BidScope.ALL_TIME && (
+          <div className="flex items-center gap-2">
+            <Countdown scope={scope === BidScope.DAILY ? "daily" : "weekly"} />
+            <button
+              type="button"
+              onClick={() => openHallOfFame(scope === BidScope.DAILY ? "daily" : "weekly")}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+            >
+              <Trophy className="size-3.5 shrink-0" />
+              Hall of fame
+            </button>
+          </div>
+        )}
       </div>
 
       <div id="categories" className="scroll-mt-24 flex min-w-0 items-center gap-2">
