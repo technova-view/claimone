@@ -8,7 +8,7 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 const NAV_LINKS = [
   { href: "/", label: "Leaderboard" },
-  { href: "/#categories", label: "Categories" },
+  { href: "/categories", label: "Categories" },
   { href: "/about", label: "About" },
   { href: "/rules", label: "Rules" },
 ];
