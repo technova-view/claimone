@@ -5,7 +5,12 @@
 export function faviconUrlFor(url: string): string | null {
   try {
     const { hostname } = new URL(url);
-    return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(hostname)}&sz=64`;
+    // Requesting a larger canvas than we display gives a sharper source
+    // bitmap for the zoom-and-crop treatment in ListingAvatar (Google
+    // centers small icons in a mostly-empty square rather than filling
+    // it, so we crop into that square rather than just requesting more
+    // padding).
+    return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(hostname)}&sz=128`;
   } catch {
     return null;
   }

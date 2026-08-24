@@ -1,21 +1,9 @@
-import type { BidSnapshot, HallOfFameEntry } from "@/lib/db/entities/hall-of-fame.entity";
-import { displayHostFor, faviconUrlFor, outboundLinkFor, xAvatarUrlFor } from "@/lib/services/link-display";
+import type { HallOfFameEntry } from "@/lib/db/entities/hall-of-fame.entity";
+import { displayHostFor, outboundLinkFor } from "@/lib/services/link-display";
+import { ListingAvatar } from "@/components/ui/listing-avatar";
 
 function formatAmount(cents: number): string {
   return `$${(cents / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
-}
-
-function EntryAvatar({ snap }: { snap: BidSnapshot }) {
-  const src = snap.handle ? xAvatarUrlFor(snap.handle) : snap.url ? faviconUrlFor(snap.url) : null;
-  if (!src) {
-    return (
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-sm font-semibold text-muted-foreground">
-        ?
-      </span>
-    );
-  }
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={src} alt="" className="size-9 shrink-0 rounded-lg border border-border object-cover" />;
 }
 
 function EntryCard({ entry, highlight }: { entry: HallOfFameEntry; highlight?: boolean }) {
@@ -33,7 +21,7 @@ function EntryCard({ entry, highlight }: { entry: HallOfFameEntry; highlight?: b
           : "flex items-center gap-3 rounded-2xl border border-border bg-card p-3"
       }
     >
-      <EntryAvatar snap={snap} />
+      <ListingAvatar url={snap.url} handle={snap.handle} size="size-9" radius="rounded-lg" />
       <span className="min-w-0 flex-1">
         <span className="block truncate font-medium">{label}</span>
         <span className="block truncate text-sm text-muted-foreground">{snap.categoryName}</span>

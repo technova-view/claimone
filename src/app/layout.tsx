@@ -3,6 +3,7 @@ import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { AppModalsProvider } from "@/components/app-modals/app-modals-provider";
+import { SiteFooter } from "@/components/site/site-footer";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
@@ -28,7 +29,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <AppModalsProvider>{children}</AppModalsProvider>
+          <AppModalsProvider>
+            {children}
+            <SiteFooter />
+          </AppModalsProvider>
         </ThemeProvider>
       </body>
     </html>

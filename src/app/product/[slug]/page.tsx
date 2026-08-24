@@ -7,10 +7,11 @@ import { ProductPageActions } from "@/components/product/product-page-actions";
 import { getLeaderboard, hasPendingBidMatchingSlug } from "@/lib/services/bidding.service";
 import { BidScope } from "@/lib/db/entities/bid.entity";
 import { slugForListing } from "@/lib/services/product-slug";
-import { displayHostFor, faviconUrlFor, outboundLinkFor, timeAgo, xAvatarUrlFor } from "@/lib/services/link-display";
+import { displayHostFor, outboundLinkFor, timeAgo } from "@/lib/services/link-display";
 import { getCategoryIcon } from "@/lib/config/category-icons";
 import { placeholderClicks } from "@/lib/services/placeholder-clicks";
 import { LiveDot } from "@/components/ui/live-dot";
+import { ListingAvatar } from "@/components/ui/listing-avatar";
 import { cn } from "@/lib/utils";
 
 function formatAmount(cents: number): string {
@@ -94,7 +95,6 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const { row, overallTotal, categoryRank, categoryTotal } = data;
 
   const label = row.handle ? `@${row.handle}` : row.url ? displayHostFor(row.url) : "";
-  const avatarSrc = row.handle ? xAvatarUrlFor(row.handle) : row.url ? faviconUrlFor(row.url) : null;
   const isLeader = row.rank === 1;
   const categoryIcon = { Icon: getCategoryIcon(row.categoryName) };
 
@@ -121,14 +121,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <div className="relative flex flex-col gap-6 p-6 sm:p-8">
             <div className="flex items-start gap-4">
               <div className="relative shrink-0">
-                {avatarSrc ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={avatarSrc} alt="" className="size-16 rounded-2xl border border-border object-cover" />
-                ) : (
-                  <span className="flex size-16 items-center justify-center rounded-2xl bg-secondary text-xl font-semibold text-muted-foreground">
-                    ?
-                  </span>
-                )}
+                <ListingAvatar url={row.url} handle={row.handle} size="size-16" radius="rounded-2xl" />
                 <span
                   className={cn(
                     "absolute -bottom-1.5 -right-1.5 flex size-6 items-center justify-center rounded-full text-[11px] font-bold ring-2 ring-card",

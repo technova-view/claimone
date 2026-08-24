@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
-import { Crown, DollarSign, Eye, Layers, RefreshCw, Sparkles, Trophy, Zap } from "lucide-react";
+import { Briefcase, Crown, DollarSign, Eye, Layers, RefreshCw, Sparkles, Trophy, Zap } from "lucide-react";
 import { SiteHeader } from "@/components/site/site-header";
+import { LinkedInIcon, XIcon } from "@/components/icons/social-icons";
 import { LiveDot } from "@/components/ui/live-dot";
 import { getLeaderboard } from "@/lib/services/bidding.service";
 import { listCategories } from "@/lib/services/category.service";
@@ -39,6 +41,41 @@ const STEPS = [
     icon: Trophy,
     title: "Hold the rank",
     body: "You keep your spot until someone outbids you — or resets it in the Daily and Weekly boards.",
+  },
+];
+
+const FOUNDERS: {
+  name: string;
+  initials: string;
+  role: string;
+  company: string;
+  photoUrl: string | null;
+  // Per-photo crop focal point (Tailwind arbitrary object-position) — the
+  // two source photos frame the head differently, so one shared crop left
+  // extra empty space above Maruf's head.
+  photoPosition: string;
+  handle: string;
+  linkedinUrl: string;
+}[] = [
+  {
+    name: "Md. Maruf Bin Salim",
+    initials: "MS",
+    role: "Full Stack Developer",
+    company: "TechNova",
+    photoUrl: "/Maruf.png",
+    photoPosition: "object-[50%_30%]",
+    handle: "MarufSalim35872",
+    linkedinUrl: "https://www.linkedin.com/in/md-maruf-bin-salim-bhuiyan/",
+  },
+  {
+    name: "Md. Waliur Rahman",
+    initials: "WR",
+    role: "Full Stack Developer",
+    company: "TechNova",
+    photoUrl: "/waliur.png",
+    photoPosition: "object-[50%_15%]",
+    handle: "Waliur57",
+    linkedinUrl: "https://www.linkedin.com/in/waliur-rahman57",
   },
 ];
 
@@ -193,6 +230,66 @@ export default async function AboutPage() {
             >
               Browse categories
             </Link>
+          </div>
+        </div>
+
+        {/* Founders */}
+        <div className="flex flex-col gap-5">
+          <div>
+            <h2 className="text-xl font-semibold tracking-tight">Founders</h2>
+            <p className="mt-1 text-sm text-muted-foreground">The two people building claimone.lol.</p>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {FOUNDERS.map((founder) => (
+              <div
+                key={founder.name}
+                className="group relative overflow-hidden rounded-3xl border border-border bg-card p-6 text-center transition-colors hover:border-primary/30"
+              >
+                <div className="pointer-events-none absolute -top-10 left-1/2 size-40 -translate-x-1/2 rounded-full bg-primary/10 blur-2xl transition-opacity group-hover:opacity-80" />
+                <div className="relative flex flex-col items-center gap-3">
+                  <span className="relative flex size-24 items-center justify-center overflow-hidden rounded-full border-2 border-primary/30 bg-primary/10 font-mono text-2xl font-bold text-primary ring-4 ring-primary/5">
+                    {founder.photoUrl ? (
+                      <Image
+                        src={founder.photoUrl}
+                        alt={founder.name}
+                        fill
+                        className={`object-cover ${founder.photoPosition}`}
+                      />
+                    ) : (
+                      founder.initials
+                    )}
+                  </span>
+                  <div>
+                    <p className="text-lg font-bold tracking-tight">{founder.name}</p>
+                    <p className="text-sm text-muted-foreground">{founder.role}</p>
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
+                    <Briefcase className="size-3.5 shrink-0 text-primary" />
+                    Founder, {founder.company}
+                  </span>
+                  <div className="mt-1 flex w-full items-center justify-center gap-2 border-t border-border pt-4">
+                    <a
+                      href={`https://x.com/${founder.handle}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`${founder.name} on X`}
+                      className="flex size-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+                    >
+                      <XIcon className="size-4 shrink-0" />
+                    </a>
+                    <a
+                      href={founder.linkedinUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`${founder.name} on LinkedIn`}
+                      className="flex size-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+                    >
+                      <LinkedInIcon className="size-4 shrink-0" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </main>

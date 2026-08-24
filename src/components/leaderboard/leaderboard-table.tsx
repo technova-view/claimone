@@ -5,11 +5,12 @@ import Link from "next/link";
 import { ArrowRight, ChevronLeft, ChevronRight, Zap } from "lucide-react";
 import type { LeaderboardRow } from "@/lib/types/leaderboard";
 import type { BidScope } from "@/lib/types/scope";
-import { displayHostFor, faviconUrlFor, outboundLinkFor, timeAgo, xAvatarUrlFor } from "@/lib/services/link-display";
+import { displayHostFor, outboundLinkFor, timeAgo } from "@/lib/services/link-display";
 import { slugForListing } from "@/lib/services/product-slug";
 import { placeholderClicks } from "@/lib/services/placeholder-clicks";
 import { useAppModals } from "@/components/app-modals/app-modals-provider";
 import { LiveDot } from "@/components/ui/live-dot";
+import { ListingAvatar } from "@/components/ui/listing-avatar";
 import { MIN_BID_CENTS } from "@/lib/config/bid-config";
 import { cn } from "@/lib/utils";
 
@@ -27,21 +28,7 @@ function truncateDescription(description: string): string {
 }
 
 function RowAvatar({ row, size = "size-10" }: { row: LeaderboardRow; size?: string }) {
-  const src = row.handle ? xAvatarUrlFor(row.handle) : row.url ? faviconUrlFor(row.url) : null;
-  if (!src) {
-    return (
-      <span
-        className={cn(
-          "flex shrink-0 items-center justify-center rounded-xl bg-secondary text-sm font-semibold text-muted-foreground",
-          size,
-        )}
-      >
-        ?
-      </span>
-    );
-  }
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={src} alt="" className={cn("shrink-0 rounded-xl border border-border object-cover", size)} />;
+  return <ListingAvatar url={row.url} handle={row.handle} size={size} />;
 }
 
 function Dot() {
