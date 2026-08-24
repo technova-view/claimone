@@ -4,7 +4,6 @@ import { useMemo, useState, type FormEvent } from "react";
 import { ArrowUp, AtSign, Globe2, Sparkles, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CategorySelect } from "@/components/category/category-select";
-import { Countdown } from "@/components/leaderboard/countdown";
 import { submitBidCheckout } from "@/lib/services/checkout-client";
 import { BidScope } from "@/lib/types/scope";
 import { MIN_BID_CENTS, MIN_RAISE_TO_TAKE_TOP_CENTS } from "@/lib/config/bid-config";
@@ -34,16 +33,16 @@ function minPriceFor(rows: LeaderboardRow[], categorySlug: string): number {
 
 type LedgerRow = { kind: "row" | "ghost"; rank: number; amountCents: number; label?: string };
 
-const TOP_N = 3;
+const TOP_N = 5;
 
-// Top 3, with the bidder's own (not-yet-submitted) amount inserted at the
-// rank it would actually take if it lands in that top 3. If it doesn't,
-// the top 3 stays real and the caller shows the ghost rank as a one-line
+// Top N, with the bidder's own (not-yet-submitted) amount inserted at the
+// rank it would actually take if it lands in that top N. If it doesn't,
+// the top N stays real and the caller shows the ghost rank as a one-line
 // note instead of stretching the list to fit it.
 //
-// `top` is always exactly TOP_N slots (padded with null) so the panel's
-// height never changes when a category has fewer bidders — the caller
-// renders null slots as invisible placeholders rather than omitting them.
+// `top` is padded to TOP_N slots with null so callers that need the fixed
+// length (amountToEnterTop's lookup below) can rely on it; the renderer
+// filters the nulls out and shows only the rows that actually exist.
 function buildLedger(categoryRows: LeaderboardRow[], amountCents: number, ghostLabel: string) {
   const sorted = [...categoryRows].sort((a, b) => b.amountCents - a.amountCents);
   const insertIndex = sorted.findIndex((r) => r.amountCents < amountCents);
@@ -143,9 +142,84 @@ export function ClaimHero({
   return (
     <section className="flex flex-col gap-4 py-4">
       <div className="rounded-2xl border border-border md:grid md:grid-cols-[1.05fr_1fr]">
-        {/* Ledger pane — category select doubles as the panel's own title */}
+        {/* Ledger pane */}
         <div className="flex flex-col gap-3 rounded-t-2xl border-b border-border bg-secondary/30 p-5 md:rounded-t-none md:rounded-l-2xl md:border-b-0 md:border-r">
-          <div className="flex items-center justify-between gap-3">
+          <ol className="flex flex-col gap-1 font-mono text-sm tabular-nums">
+            {ledger.top
+              .filter((row): row is LedgerRow => row !== null)
+              .map((row) => (
+                <li
+                  key={row.rank}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-md border px-2 py-1.5",
+                    row.kind === "ghost"
+                      ? "border-dashed border-primary bg-primary/5"
+                      : "border-transparent text-muted-foreground",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "flex size-6 shrink-0 items-center justify-center rounded-md text-[11px] font-semibold",
+                      row.kind === "ghost" ? "bg-primary text-primary-foreground" : "bg-secondary",
+                    )}
+                  >
+                    #{row.rank}
+                  </span>
+                  <span
+                    className={cn(
+                      "min-w-0 flex-1 truncate",
+                      row.kind === "ghost" && "font-semibold text-foreground",
+                    )}
+                  >
+                    {row.kind === "ghost" ? row.label : formatAmount(row.amountCents)}
+                  </span>
+                  {row.kind === "ghost" && (
+                    <span className="shrink-0 text-foreground">{formatAmount(row.amountCents)}</span>
+                  )}
+                </li>
+              ))}
+          </ol>
+
+          <div className="flex flex-1 items-center justify-center">
+            <p
+              className={cn(
+                "flex w-fit items-center gap-1.5 text-xs",
+                ledger.isEmpty
+                  ? "rounded-full bg-primary/10 px-2.5 py-1 font-medium text-primary"
+                  : !ledger.ghostInTop
+                    ? "font-medium text-primary"
+                    : "text-foreground/70",
+              )}
+            >
+              {ledger.isEmpty && <Sparkles className="size-3.5 shrink-0" />}
+
+              {ledger.isEmpty ? (
+                "No bids here yet — be the first to claim #1."
+              ) : ledger.ghostInTop ? (
+                <>
+                  <Trophy className="size-3.5 shrink-0 text-primary" />
+                  <span className="text-primary font-medium">
+                    {ledger.total} bids competing for the top.
+                  </span>
+                </>
+              ) : (
+                <>
+                  <ArrowUp className="size-3.5 shrink-0" />
+                  {`Rank #${ledger.ghostRank} of ${ledger.total} — add ${formatAmount(
+                    ledger.amountToEnterTop,
+                  )} to reach the top ${TOP_N}.`}
+                </>
+              )}
+            </p>
+          </div>
+        </div>
+
+        {/* Form pane */}
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col justify-center gap-4 rounded-b-2xl p-5 md:rounded-b-none md:rounded-r-2xl"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <CategorySelect
               categories={categories}
               value={categorySlug}
@@ -153,7 +227,7 @@ export function ClaimHero({
               variant="ghost"
               className="min-w-0"
             />
-            <div className="flex shrink-0 gap-0.5 rounded-md border border-border bg-background p-0.5 text-xs">
+            <div className="flex shrink-0 gap-0.5 rounded-md border border-border bg-secondary p-0.5 text-xs">
               {SCOPE_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
@@ -170,82 +244,6 @@ export function ClaimHero({
             </div>
           </div>
 
-          {scope !== BidScope.ALL_TIME && (
-            <Countdown className="self-end" scope={scope === BidScope.DAILY ? "daily" : "weekly"} />
-          )}
-
-          <ol className="flex flex-col gap-1 font-mono text-sm tabular-nums">
-            {ledger.top.map((row, i) => (
-              <li
-                key={i}
-                className={cn(
-                  "flex items-center gap-2.5 rounded-md border px-2 py-1.5",
-                  !row && "invisible",
-                  row && row.kind === "ghost"
-                    ? "border-dashed border-primary bg-primary/5"
-                    : "border-transparent text-muted-foreground",
-                )}
-              >
-                <span
-                  className={cn(
-                    "flex size-6 shrink-0 items-center justify-center rounded-md text-[11px] font-semibold",
-                    row && row.kind === "ghost" ? "bg-primary text-primary-foreground" : "bg-secondary",
-                  )}
-                >
-                  #{row?.rank ?? i + 1}
-                </span>
-                <span
-                  className={cn(
-                    "min-w-0 flex-1 truncate",
-                    row && row.kind === "ghost" && "font-semibold text-foreground",
-                  )}
-                >
-                  {row && row.kind === "ghost" ? row.label : formatAmount(row?.amountCents ?? 0)}
-                </span>
-                {row && row.kind === "ghost" && (
-                  <span className="shrink-0 text-foreground">{formatAmount(row.amountCents)}</span>
-                )}
-              </li>
-            ))}
-          </ol>
-
-          <p
-            className={cn(
-              "flex w-fit items-center gap-1.5 text-xs",
-              ledger.isEmpty
-                ? "rounded-full bg-primary/10 px-2.5 py-1 font-medium text-primary"
-                : !ledger.ghostInTop
-                  ? "font-medium text-primary"
-                  : "text-foreground/70",
-            )}
-          >
-            {ledger.isEmpty && <Sparkles className="size-3.5 shrink-0" />}
-
-            {ledger.isEmpty ? (
-              "No bids here yet — be the first to claim #1."
-            ) : ledger.ghostInTop ? (
-              <>
-                <Trophy className="size-3.5 shrink-0 text-primary" />
-                  <span className="text-primary font-medium">
-                  {ledger.total} bids competing for the top.
-                </span>
-              </>
-            ) : (
-              <>
-                <ArrowUp className="size-3.5 shrink-0" />
-                {`Rank #${ledger.ghostRank} of ${ledger.total} — add ${formatAmount(
-                  ledger.amountToEnterTop,
-                )} to reach the top ${TOP_N}.`}
-              </>
-            )}
-          </p>
-        </div>
-
-        {/* Form pane */}
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-col justify-center gap-4 rounded-b-2xl p-5 md:rounded-b-none md:rounded-r-2xl"
-        >
           <div className="relative">
             <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">
               {looksLikeHandle ? <AtSign className="size-4" /> : <Globe2 className="size-4" />}

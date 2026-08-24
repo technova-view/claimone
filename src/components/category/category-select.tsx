@@ -75,7 +75,7 @@ export function CategorySelect({ categories, value, onChange, className, variant
         {/* min-w-0 is required alongside truncate here — a flex item's default
             min-width:auto blocks shrinking below its text's natural width, so
             without it the ellipsis never engages and the row overflows instead. */}
-        <span className={cn("min-w-0 truncate text-left", !isGhost && "flex-1")}>
+        <span className="min-w-0 flex-1 truncate text-left">
           {selected?.name ?? "Choose a category"}
         </span>
         <ChevronDown
