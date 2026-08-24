@@ -339,7 +339,7 @@ function TopThreeRow({
         <button
           type="button"
           onClick={() => onClaimNow(row)}
-          className="inline-flex items-center gap-1 rounded-md border border-primary/40 px-2 py-0.5 text-xs font-semibold text-primary opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 hover:border-primary/60 hover:bg-primary/10"
+          className="inline-flex items-center gap-1 rounded-md border border-primary/40 px-1 py-0.5 text-xs font-semibold text-primary opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 hover:border-primary/60 hover:bg-primary/10"
         >
           <Zap className="size-3 shrink-0" />
           Claim now
