@@ -3,7 +3,7 @@ import { getDataSource } from "@/lib/db/data-source";
 import { Bid, BidScope, BidStatus } from "@/lib/db/entities/bid.entity";
 import { getCategoryBySlug } from "@/lib/services/category.service";
 import { getDailyKey, getWeeklyKey } from "@/lib/services/period";
-import { getFakeItemsEnabled } from "@/lib/services/stats.service";
+import { getClickBoostEnabled, getFakeItemsEnabled } from "@/lib/services/stats.service";
 import { fetchUrlDescription } from "@/lib/services/link-metadata.service";
 import { normalizeUrl } from "@/lib/services/link-display";
 import { slugForListing } from "@/lib/services/product-slug";
@@ -55,7 +55,7 @@ export async function getLeaderboard({ scope, categorySlug }: LeaderboardParams)
 
   qb.orderBy("bid.amountCents", "DESC").addOrderBy("bid.createdAt", "ASC");
 
-  const bids = await qb.getMany();
+  const [bids, clickBoostEnabled] = await Promise.all([qb.getMany(), getClickBoostEnabled()]);
 
   return bids.map((bid, index) => ({
     id: bid.id,
@@ -68,6 +68,7 @@ export async function getLeaderboard({ scope, categorySlug }: LeaderboardParams)
     categoryName: bid.category.name,
     categorySlug: bid.category.slug,
     createdAt: bid.createdAt.toISOString(),
+    clicks: bid.clickCount + (clickBoostEnabled ? bid.boostClicks : 0),
   }));
 }
 
@@ -264,6 +265,13 @@ export async function dedupeActiveListing(
 export async function setPaddleTransactionId(bidId: string, paddleTransactionId: string): Promise<void> {
   const ds = await getDataSource();
   await ds.getRepository(Bid).update({ id: bidId }, { paddleTransactionId });
+}
+
+// Called by the /go/[id] outbound-link redirect route on every real
+// click-through — a plain atomic increment, no read-then-write race.
+export async function incrementClickCount(bidId: string): Promise<void> {
+  const ds = await getDataSource();
+  await ds.getRepository(Bid).increment({ id: bidId }, "clickCount", 1);
 }
 
 // Only the verified Paddle webhook handler may call this. Idempotent: safe

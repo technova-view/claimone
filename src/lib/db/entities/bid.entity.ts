@@ -71,4 +71,14 @@ export class Bid {
   // checkout flow. Never mutated afterwards — it's provenance, not a toggle.
   @Column({ type: "boolean", default: false })
   isFake!: boolean;
+
+  // Real outbound click-throughs, incremented by the /go/[id] redirect route.
+  @Column({ type: "int", default: 0 })
+  clickCount!: number;
+
+  // Admin-set number added on top of clickCount for display — never touches
+  // the real count itself. See stats_settings.clickBoostEnabled for the
+  // site-wide switch that hides this boost.
+  @Column({ type: "int", default: 0 })
+  boostClicks!: number;
 }

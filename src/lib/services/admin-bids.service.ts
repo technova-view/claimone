@@ -15,6 +15,8 @@ export interface AdminBidRow {
   categoryName: string;
   categorySlug: string;
   isFake: boolean;
+  clickCount: number;
+  boostClicks: number;
   createdAt: string;
 }
 
@@ -47,6 +49,8 @@ export async function listAllBidsForAdmin(params: ListAdminBidsParams = {}): Pro
     categoryName: bid.category.name,
     categorySlug: bid.category.slug,
     isFake: bid.isFake,
+    clickCount: bid.clickCount,
+    boostClicks: bid.boostClicks,
     createdAt: bid.createdAt.toISOString(),
   }));
 }
@@ -117,6 +121,7 @@ interface CreateAdminBidInput {
   amountCents: number;
   url?: string | null;
   handle?: string | null;
+  boostClicks?: number;
 }
 
 export async function createAdminBid(input: CreateAdminBidInput): Promise<Bid> {
@@ -152,6 +157,7 @@ export async function createAdminBid(input: CreateAdminBidInput): Promise<Bid> {
     paddleTransactionId: null,
     activatedAt: new Date(),
     isFake: true,
+    boostClicks: Math.max(0, Math.round(input.boostClicks ?? 0)),
   });
   const saved = await repo.save(bid);
 
@@ -173,6 +179,7 @@ interface UpdateAdminBidInput {
   categorySlug?: string;
   scope?: BidScope;
   status?: BidStatus;
+  boostClicks?: number;
 }
 
 export async function updateAdminBid(id: string, input: UpdateAdminBidInput): Promise<Bid> {
@@ -205,6 +212,9 @@ export async function updateAdminBid(id: string, input: UpdateAdminBidInput): Pr
     bid.handle = handle;
   }
   if (input.status) bid.status = input.status;
+  if (input.boostClicks !== undefined) {
+    bid.boostClicks = Math.max(0, Math.round(input.boostClicks));
+  }
 
   const saved = await repo.save(bid);
 

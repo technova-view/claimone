@@ -5,9 +5,8 @@ import Link from "next/link";
 import { ArrowRight, ChevronLeft, ChevronRight, Zap } from "lucide-react";
 import type { LeaderboardRow } from "@/lib/types/leaderboard";
 import type { BidScope } from "@/lib/types/scope";
-import { displayHostFor, faviconUrlFor, outboundLinkFor, timeAgo, xAvatarUrlFor } from "@/lib/services/link-display";
+import { displayHostFor, faviconUrlFor, timeAgo, xAvatarUrlFor } from "@/lib/services/link-display";
 import { slugForListing } from "@/lib/services/product-slug";
-import { placeholderClicks } from "@/lib/services/placeholder-clicks";
 import { useAppModals } from "@/components/app-modals/app-modals-provider";
 import { LiveDot } from "@/components/ui/live-dot";
 import { MIN_BID_CENTS } from "@/lib/config/bid-config";
@@ -177,7 +176,7 @@ export function LeaderboardTable({
                         layer) opens the listing's own site/profile — not the
                         internal detail page. */}
                     <a
-                      href={outboundLinkFor(row)}
+                      href={`/go/${row.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="absolute inset-0"
@@ -219,7 +218,7 @@ export function LeaderboardTable({
                       </span>
                       <span className="flex items-center gap-1 text-xs font-semibold text-muted-foreground">
                         <LiveDot />
-                        {placeholderClicks(row.id)} clicks
+                        {row.clicks.toLocaleString()} clicks
                       </span>
                       <button
                         type="button"
@@ -297,7 +296,7 @@ function TopThreeRow({
           controls below, which sit on their own positioned layer) opens the
           listing's own site/profile — not the internal detail page. */}
       <a
-        href={outboundLinkFor(row)}
+        href={`/go/${row.id}`}
         target="_blank"
         rel="noopener noreferrer"
         className="absolute inset-0 rounded-2xl"
@@ -313,7 +312,7 @@ function TopThreeRow({
         <span className="font-mono text-lg font-bold text-primary sm:text-xl">{formatAmount(row.amountCents)}</span>
         <span className="flex items-center gap-1 text-xs font-semibold text-muted-foreground">
           <LiveDot />
-          {placeholderClicks(row.id)} clicks
+          {row.clicks.toLocaleString()} clicks
         </span>
         <button
           type="button"

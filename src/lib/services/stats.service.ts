@@ -130,6 +130,26 @@ export async function setFakeItemsEnabled(enabled: boolean): Promise<void> {
   }
 }
 
+// Site-wide switch: when off, every listing's public click count shows its
+// real clickCount only, ignoring each bid's admin-set boostClicks.
+export async function getClickBoostEnabled(): Promise<boolean> {
+  const ds = await getDataSource();
+  const existing = await ds.getRepository(StatsSettings).findOne({ where: { id: 1 } });
+  return existing?.clickBoostEnabled ?? true;
+}
+
+export async function setClickBoostEnabled(enabled: boolean): Promise<void> {
+  const ds = await getDataSource();
+  const repo = ds.getRepository(StatsSettings);
+  const existing = await repo.findOne({ where: { id: 1 } });
+  if (existing) {
+    existing.clickBoostEnabled = enabled;
+    await repo.save(existing);
+  } else {
+    await repo.save(repo.create({ id: 1, clickBoostEnabled: enabled }));
+  }
+}
+
 export const PUBLIC_STATS_RANGES = [1, 7, 15, 30] as const;
 export type PublicStatsRangeDays = (typeof PUBLIC_STATS_RANGES)[number];
 

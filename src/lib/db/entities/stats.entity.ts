@@ -50,4 +50,9 @@ export class StatsSettings {
 
   @Column({ type: "boolean", default: true })
   fakeItemsEnabled!: boolean;
+
+  // When off, every listing's public click count shows its real clickCount
+  // only — each bid's admin-set boostClicks is ignored, site-wide.
+  @Column({ type: "boolean", default: true })
+  clickBoostEnabled!: boolean;
 }

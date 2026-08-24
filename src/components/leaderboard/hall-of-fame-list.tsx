@@ -1,5 +1,5 @@
 import type { BidSnapshot, HallOfFameEntry } from "@/lib/db/entities/hall-of-fame.entity";
-import { displayHostFor, faviconUrlFor, outboundLinkFor, xAvatarUrlFor } from "@/lib/services/link-display";
+import { displayHostFor, faviconUrlFor, xAvatarUrlFor } from "@/lib/services/link-display";
 
 function formatAmount(cents: number): string {
   return `$${(cents / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
@@ -24,7 +24,7 @@ function EntryCard({ entry, highlight }: { entry: HallOfFameEntry; highlight?: b
 
   return (
     <a
-      href={outboundLinkFor(snap)}
+      href={`/go/${snap.bidId}`}
       target="_blank"
       rel="noopener noreferrer"
       className={

@@ -10,6 +10,7 @@ interface UpdateBidBody {
   categorySlug?: string;
   scope?: BidScope;
   status?: BidStatus;
+  boostClicks?: number;
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

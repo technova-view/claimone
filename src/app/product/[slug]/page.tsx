@@ -7,9 +7,8 @@ import { ProductPageActions } from "@/components/product/product-page-actions";
 import { getLeaderboard, hasPendingBidMatchingSlug } from "@/lib/services/bidding.service";
 import { BidScope } from "@/lib/db/entities/bid.entity";
 import { slugForListing } from "@/lib/services/product-slug";
-import { displayHostFor, faviconUrlFor, outboundLinkFor, timeAgo, xAvatarUrlFor } from "@/lib/services/link-display";
+import { displayHostFor, faviconUrlFor, timeAgo, xAvatarUrlFor } from "@/lib/services/link-display";
 import { getCategoryIcon } from "@/lib/config/category-icons";
-import { placeholderClicks } from "@/lib/services/placeholder-clicks";
 import { LiveDot } from "@/components/ui/live-dot";
 import { cn } from "@/lib/utils";
 
@@ -172,14 +171,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <StatCell
                 icon={MousePointerClick}
                 label="Clicks"
-                value={placeholderClicks(row.id).toLocaleString()}
+                value={row.clicks.toLocaleString()}
                 sub="Outbound clicks"
                 live
               />
             </div>
 
             <ProductPageActions
-              outboundHref={outboundLinkFor(row)}
+              outboundHref={`/go/${row.id}`}
               label={label}
               categorySlug={row.categorySlug}
               amountCents={row.amountCents}

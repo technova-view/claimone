@@ -34,6 +34,7 @@ export function BidFormModal({
   const [linkType, setLinkType] = useState<"url" | "handle">("url");
   const [linkValue, setLinkValue] = useState("");
   const [amountDollars, setAmountDollars] = useState("");
+  const [boostClicks, setBoostClicks] = useState("0");
   const [targetRank, setTargetRank] = useState("");
   const [standings, setStandings] = useState<StandingRow[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -48,12 +49,14 @@ export function BidFormModal({
       setLinkType(editing.handle ? "handle" : "url");
       setLinkValue(editing.handle ?? editing.url ?? "");
       setAmountDollars((editing.amountCents / 100).toString());
+      setBoostClicks(editing.boostClicks.toString());
     } else {
       setScope(BidScope.ALL_TIME);
       setCategorySlug(categories[0]?.slug ?? "");
       setLinkType("url");
       setLinkValue("");
       setAmountDollars("");
+      setBoostClicks("0");
     }
     setTargetRank("");
     setError(null);
@@ -108,6 +111,7 @@ export function BidFormModal({
         amountCents,
         url: linkType === "url" ? linkValue.trim() : null,
         handle: linkType === "handle" ? linkValue.trim() : null,
+        boostClicks: Math.max(0, Math.round(Number(boostClicks) || 0)),
       };
       const res = await fetch(editing ? `/api/admin/bids/${editing.id}` : "/api/admin/bids", {
         method: editing ? "PATCH" : "POST",
@@ -217,6 +221,21 @@ export function BidFormModal({
             </Button>
           </div>
         </div>
+
+        <label className="flex flex-col gap-1.5 text-sm font-medium">
+          Click boost
+          <input
+            type="number"
+            min={0}
+            value={boostClicks}
+            onChange={(e) => setBoostClicks(e.target.value)}
+            className="w-32 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          />
+          <span className="text-xs font-normal text-muted-foreground">
+            Added on top of real clicks publicly — never touches the real count. Site-wide toggle on the Rankings
+            page.
+          </span>
+        </label>
 
         {standings.length > 0 && (
           <div className="max-h-32 overflow-y-auto rounded-lg border border-border p-2 text-xs">
