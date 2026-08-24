@@ -65,4 +65,10 @@ export class Bid {
 
   @Column({ type: "timestamptz", nullable: true })
   activatedAt!: Date | null;
+
+  // Set only at creation time: true for bids the admin panel injects
+  // directly (no Paddle payment), false for bids created through the real
+  // checkout flow. Never mutated afterwards — it's provenance, not a toggle.
+  @Column({ type: "boolean", default: false })
+  isFake!: boolean;
 }

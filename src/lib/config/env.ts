@@ -28,4 +28,13 @@ export const env = {
   get siteUrl() {
     return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   },
+  get adminUsername() {
+    return process.env.ADMIN_USERNAME ?? "admin";
+  },
+  get adminPassword() {
+    return process.env.ADMIN_PASSWORD ?? "Maruf789!";
+  },
+  get adminSessionSecret() {
+    return process.env.ADMIN_SESSION_SECRET ?? "claimone-admin-session-default-secret";
+  },
 };

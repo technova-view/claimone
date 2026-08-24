@@ -2,6 +2,7 @@ import { getDataSource } from "@/lib/db/data-source";
 import { Bid, BidScope, BidStatus } from "@/lib/db/entities/bid.entity";
 import { getCategoryBySlug } from "@/lib/services/category.service";
 import { getDailyKey, getWeeklyKey } from "@/lib/services/period";
+import { getFakeItemsEnabled } from "@/lib/services/stats.service";
 import { fetchUrlDescription } from "@/lib/services/link-metadata.service";
 import { slugForListing } from "@/lib/services/product-slug";
 import {
@@ -42,6 +43,12 @@ export async function getLeaderboard({ scope, categorySlug }: LeaderboardParams)
 
   if (categorySlug) {
     qb.andWhere("category.slug = :categorySlug", { categorySlug });
+  }
+
+  // Admin-wide kill switch: hides every fake (admin-injected) entry from
+  // public leaderboard views without touching the underlying rows.
+  if (!(await getFakeItemsEnabled())) {
+    qb.andWhere("bid.isFake = false");
   }
 
   qb.orderBy("bid.amountCents", "DESC").addOrderBy("bid.createdAt", "ASC");
