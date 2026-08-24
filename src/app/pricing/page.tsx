@@ -52,9 +52,9 @@ export default function PricingPage() {
             Above those minimums, there&rsquo;s no price cap and no fixed catalog — you choose exactly how much to
             bid, and the highest bid in a category holds rank #1. The current going rate for any spot is always
             visible on the{" "}
-            <a href="/" className="text-primary hover:underline">
+            <Link href="/" className="text-primary hover:underline">
               leaderboard
-            </a>{" "}
+            </Link>{" "}
             before you pay.
           </p>
         </section>
