@@ -1,7 +1,8 @@
 import { getDataSource } from "@/lib/db/data-source";
 import { Bid, BidScope, BidStatus } from "@/lib/db/entities/bid.entity";
 import { getCategoryBySlug } from "@/lib/services/category.service";
-import { BidValidationError, currentPeriodKeyFor } from "@/lib/services/bidding.service";
+import { BidValidationError, currentPeriodKeyFor, dedupeActiveListing } from "@/lib/services/bidding.service";
+import { normalizeUrl } from "@/lib/services/link-display";
 
 export interface AdminBidRow {
   id: string;
@@ -119,7 +120,7 @@ interface CreateAdminBidInput {
 }
 
 export async function createAdminBid(input: CreateAdminBidInput): Promise<Bid> {
-  const url = input.url?.trim() || null;
+  const url = input.url?.trim() ? normalizeUrl(input.url) : null;
   const handle = input.handle?.trim().replace(/^@/, "") || null;
 
   if (!url && !handle) {
@@ -152,7 +153,17 @@ export async function createAdminBid(input: CreateAdminBidInput): Promise<Bid> {
     activatedAt: new Date(),
     isFake: true,
   });
-  return repo.save(bid);
+  const saved = await repo.save(bid);
+
+  await dedupeActiveListing(ds, {
+    scope: saved.scope,
+    periodKey: saved.periodKey,
+    categoryId: saved.categoryId,
+    url: saved.url,
+    handle: saved.handle,
+  });
+
+  return saved;
 }
 
 interface UpdateAdminBidInput {
@@ -186,7 +197,7 @@ export async function updateAdminBid(id: string, input: UpdateAdminBidInput): Pr
     bid.amountCents = input.amountCents;
   }
   if (input.url !== undefined || input.handle !== undefined) {
-    const url = input.url?.trim() || null;
+    const url = input.url?.trim() ? normalizeUrl(input.url) : null;
     const handle = input.handle?.trim().replace(/^@/, "") || null;
     if (!url && !handle) throw new BidValidationError("Provide either a URL or an X handle.");
     if (url && handle) throw new BidValidationError("Provide only one of URL or X handle, not both.");
@@ -195,7 +206,19 @@ export async function updateAdminBid(id: string, input: UpdateAdminBidInput): Pr
   }
   if (input.status) bid.status = input.status;
 
-  return repo.save(bid);
+  const saved = await repo.save(bid);
+
+  if (saved.status === BidStatus.ACTIVE) {
+    await dedupeActiveListing(ds, {
+      scope: saved.scope,
+      periodKey: saved.periodKey,
+      categoryId: saved.categoryId,
+      url: saved.url,
+      handle: saved.handle,
+    });
+  }
+
+  return saved;
 }
 
 export async function deleteAdminBid(id: string): Promise<void> {

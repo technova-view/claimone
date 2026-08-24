@@ -157,7 +157,10 @@ function ClaimModalForm({
             </button>
           </div>
           <input
-            type={linkType === "url" ? "url" : "text"}
+            // Plain text, not type="url" — native URL validation requires a
+            // scheme, which would block "example.com" before the server gets
+            // a chance to normalize it to "https://example.com".
+            type="text"
             required
             placeholder={linkType === "url" ? "https://example.com" : "@yourhandle"}
             className={fieldClass}
