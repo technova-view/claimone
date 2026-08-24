@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ExternalLink, Link2 } from "lucide-react";
+import { Check, ExternalLink, Link2, Zap } from "lucide-react";
 import { useAppModals } from "@/components/app-modals/app-modals-provider";
 import { Button } from "@/components/ui/button";
 import { BidScope } from "@/lib/types/scope";
@@ -55,7 +55,8 @@ export function ProductPageActions({
           })
         }
       >
-        Outbid for {formatAmount(outbidPrice)}
+        <Zap className="size-4" data-icon="inline-start" />
+        Claim now for {formatAmount(outbidPrice)}
       </Button>
       <Button variant="outline" size="lg" onClick={handleCopyLink}>
         {copied ? <Check className="size-4" data-icon="inline-start" /> : <Link2 className="size-4" data-icon="inline-start" />}

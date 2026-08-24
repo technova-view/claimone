@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight, BarChart3, Eye } from "lucide-react";
 
 const ONLINE_COUNT = 612;
-const VISITOR_COUNT = 1_204_853;
+export const VISITOR_COUNT = 1_204_853;
 
 export function StatusBar() {
   return (

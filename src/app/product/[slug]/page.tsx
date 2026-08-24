@@ -1,15 +1,48 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { ChevronRight, DollarSign, Layers, MousePointerClick, Trophy } from "lucide-react";
 import { SiteHeader } from "@/components/site/site-header";
 import { ProductPageActions } from "@/components/product/product-page-actions";
 import { getLeaderboard, hasPendingBidMatchingSlug } from "@/lib/services/bidding.service";
 import { BidScope } from "@/lib/db/entities/bid.entity";
 import { slugForListing } from "@/lib/services/product-slug";
 import { displayHostFor, faviconUrlFor, outboundLinkFor, timeAgo, xAvatarUrlFor } from "@/lib/services/link-display";
+import { getCategoryIcon } from "@/lib/config/category-icons";
+import { placeholderClicks } from "@/lib/services/placeholder-clicks";
+import { LiveDot } from "@/components/ui/live-dot";
+import { cn } from "@/lib/utils";
 
 function formatAmount(cents: number): string {
   return `$${(cents / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+}
+
+function StatCell({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  live = false,
+}: {
+  icon: typeof DollarSign;
+  label: string;
+  value: string;
+  sub: string;
+  live?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-1 p-4">
+      <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <Icon className="size-3.5 shrink-0" />
+        {label}
+      </div>
+      <p className="flex items-center gap-1.5 font-mono text-2xl font-bold text-primary">
+        {value}
+        {live && <LiveDot />}
+      </p>
+      <p className="text-xs text-muted-foreground">{sub}</p>
+    </div>
+  );
 }
 
 async function loadListing(slug: string) {
@@ -62,62 +95,97 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   const label = row.handle ? `@${row.handle}` : row.url ? displayHostFor(row.url) : "";
   const avatarSrc = row.handle ? xAvatarUrlFor(row.handle) : row.url ? faviconUrlFor(row.url) : null;
+  const isLeader = row.rank === 1;
+  const categoryIcon = { Icon: getCategoryIcon(row.categoryName) };
 
   return (
     <div className="flex flex-1 flex-col">
       <SiteHeader />
-      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 px-6 py-10">
-        <nav className="text-sm text-muted-foreground">
-          <Link href="/#leaderboard" className="hover:text-foreground">
-            Leaderboard
+      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-6 py-10">
+        <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <Link href="/" className="hover:text-foreground">
+            Home
           </Link>
-          <span> · {row.categoryName}</span>
+          <ChevronRight className="size-3.5 shrink-0" />
+          <Link href={`/categories/${row.categorySlug}`} className="hover:text-foreground">
+            {row.categoryName}
+          </Link>
         </nav>
 
-        <div className="flex items-start gap-4">
-          {avatarSrc ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={avatarSrc} alt="" className="size-16 shrink-0 rounded-2xl border border-border object-cover" />
-          ) : (
-            <span className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-secondary text-xl font-semibold text-muted-foreground">
-              ?
-            </span>
-          )}
-          <div className="min-w-0">
-            <h1 className="text-2xl font-bold tracking-tight">{label}</h1>
-            {row.description && <p className="mt-2 text-muted-foreground">{row.description}</p>}
-            <p className="mt-2 text-sm text-muted-foreground">
-              {row.categoryName} · {timeAgo(row.createdAt)}
-            </p>
+        {/* One unified panel (rather than loose stacked blocks) so the
+            listing reads as a single premium "profile" instead of a stack
+            of unrelated cards. */}
+        <div className="relative overflow-hidden rounded-3xl border border-border bg-card">
+          <div className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-primary/10 blur-3xl" />
+
+          <div className="relative flex flex-col gap-6 p-6 sm:p-8">
+            <div className="flex items-start gap-4">
+              <div className="relative shrink-0">
+                {avatarSrc ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={avatarSrc} alt="" className="size-16 rounded-2xl border border-border object-cover" />
+                ) : (
+                  <span className="flex size-16 items-center justify-center rounded-2xl bg-secondary text-xl font-semibold text-muted-foreground">
+                    ?
+                  </span>
+                )}
+                <span
+                  className={cn(
+                    "absolute -bottom-1.5 -right-1.5 flex size-6 items-center justify-center rounded-full text-[11px] font-bold ring-2 ring-card",
+                    isLeader ? "bg-primary text-primary-foreground" : "border border-primary/35 bg-primary/10 text-primary",
+                  )}
+                >
+                  #{row.rank}
+                </span>
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <h1 className="text-2xl font-bold tracking-tight">{label}</h1>
+                {row.description && <p className="mt-1.5 text-muted-foreground">{row.description}</p>}
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <Link
+                    href={`/categories/${row.categorySlug}`}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground transition-colors hover:bg-secondary/70"
+                  >
+                    <categoryIcon.Icon className="size-3.5 shrink-0 text-primary" />
+                    {row.categoryName}
+                  </Link>
+                  <span className="text-xs text-muted-foreground">Listed {timeAgo(row.createdAt)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 divide-x divide-y divide-border rounded-2xl border border-border bg-secondary/30 sm:grid-cols-4 sm:divide-y-0">
+              <StatCell
+                icon={DollarSign}
+                label="Spent"
+                value={formatAmount(row.amountCents)}
+                sub="Paid to hold this rank"
+              />
+              <StatCell
+                icon={Layers}
+                label="Category rank"
+                value={`#${categoryRank}`}
+                sub={`of ${categoryTotal} in ${row.categoryName}`}
+              />
+              <StatCell icon={Trophy} label="Overall" value={`#${row.rank}`} sub={`of ${overallTotal} on the board`} />
+              <StatCell
+                icon={MousePointerClick}
+                label="Clicks"
+                value={placeholderClicks(row.id).toLocaleString()}
+                sub="Outbound clicks"
+                live
+              />
+            </div>
+
+            <ProductPageActions
+              outboundHref={outboundLinkFor(row)}
+              label={label}
+              categorySlug={row.categorySlug}
+              amountCents={row.amountCents}
+            />
           </div>
         </div>
-
-        <div className="grid grid-cols-3 gap-3">
-          <div className="rounded-2xl border border-border bg-card p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Spent</p>
-            <p className="mt-1 font-mono text-2xl font-bold text-primary">{formatAmount(row.amountCents)}</p>
-            <p className="mt-1 text-xs text-muted-foreground">Paid to hold this rank</p>
-          </div>
-          <div className="rounded-2xl border border-border bg-card p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Category rank</p>
-            <p className="mt-1 text-2xl font-bold">#{categoryRank}</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              of {categoryTotal} in {row.categoryName}
-            </p>
-          </div>
-          <div className="rounded-2xl border border-border bg-card p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Overall</p>
-            <p className="mt-1 text-2xl font-bold">#{row.rank}</p>
-            <p className="mt-1 text-xs text-muted-foreground">of {overallTotal} on the board</p>
-          </div>
-        </div>
-
-        <ProductPageActions
-          outboundHref={outboundLinkFor(row)}
-          label={label}
-          categorySlug={row.categorySlug}
-          amountCents={row.amountCents}
-        />
       </main>
     </div>
   );

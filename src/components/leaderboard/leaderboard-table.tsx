@@ -7,7 +7,9 @@ import type { LeaderboardRow } from "@/lib/types/leaderboard";
 import type { BidScope } from "@/lib/types/scope";
 import { displayHostFor, faviconUrlFor, outboundLinkFor, timeAgo, xAvatarUrlFor } from "@/lib/services/link-display";
 import { slugForListing } from "@/lib/services/product-slug";
+import { placeholderClicks } from "@/lib/services/placeholder-clicks";
 import { useAppModals } from "@/components/app-modals/app-modals-provider";
+import { LiveDot } from "@/components/ui/live-dot";
 import { MIN_BID_CENTS } from "@/lib/config/bid-config";
 import { cn } from "@/lib/utils";
 
@@ -22,18 +24,6 @@ const DESCRIPTION_MAX_CHARS = 150;
 function truncateDescription(description: string): string {
   if (description.length <= DESCRIPTION_MAX_CHARS) return description;
   return `${description.slice(0, DESCRIPTION_MAX_CHARS).trimEnd()}…`;
-}
-
-// Click tracking doesn't exist yet — this is a stable, UI-only stand-in
-// (a deterministic hash of the bid's own id, so it's consistent between
-// server and client renders and doesn't change on every reload) until
-// real counts are wired up.
-function placeholderClicks(id: string): number {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
-  }
-  return (hash % 900) + 20;
 }
 
 function RowAvatar({ row, size = "size-10" }: { row: LeaderboardRow; size?: string }) {
@@ -56,17 +46,6 @@ function RowAvatar({ row, size = "size-10" }: { row: LeaderboardRow; size?: stri
 
 function Dot() {
   return <span className="size-1 shrink-0 rounded-full bg-current opacity-40" />;
-}
-
-// Small pulsing dot marking the click count as live-updating — same
-// green ping pattern as the site-wide "online" indicator in StatusBar.
-function LiveDot() {
-  return (
-    <span className="relative flex size-1.5 shrink-0">
-      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-      <span className="relative inline-flex h-full w-full rounded-full bg-green-500" />
-    </span>
-  );
 }
 
 // The category pill already tells you the category once one is picked, so
