@@ -7,7 +7,7 @@ import { getLeaderboard } from "@/lib/services/bidding.service";
 import { listCategories } from "@/lib/services/category.service";
 import { slugForListing } from "@/lib/services/product-slug";
 import { displayHostFor } from "@/lib/services/link-display";
-import { VISITOR_COUNT } from "@/components/site/status-bar";
+import { getAllTimeVisitorTotal } from "@/lib/services/stats.service";
 import { BidScope } from "@/lib/db/entities/bid.entity";
 import { MIN_BID_CENTS, MIN_RAISE_TO_TAKE_TOP_CENTS } from "@/lib/config/bid-config";
 
@@ -61,7 +61,11 @@ const PRINCIPLES = [
 ];
 
 export default async function AboutPage() {
-  const [rows, categories] = await Promise.all([getLeaderboard({ scope: BidScope.ALL_TIME }), listCategories()]);
+  const [rows, categories, visitorTotal] = await Promise.all([
+    getLeaderboard({ scope: BidScope.ALL_TIME }),
+    listCategories(),
+    getAllTimeVisitorTotal(),
+  ]);
   const totalBidCents = rows.reduce((sum, row) => sum + row.amountCents, 0);
   const topRow = rows[0] ?? null;
   const topLabel = topRow ? (topRow.handle ? `@${topRow.handle}` : topRow.url ? displayHostFor(topRow.url) : "") : "";
@@ -112,7 +116,7 @@ export default async function AboutPage() {
                 Visitors
               </p>
               <p className="flex items-center gap-1.5 font-mono text-2xl font-bold text-primary">
-                {VISITOR_COUNT.toLocaleString()}
+                {visitorTotal.toLocaleString()}
                 <LiveDot />
               </p>
             </div>

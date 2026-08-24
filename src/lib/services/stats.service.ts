@@ -70,6 +70,19 @@ export async function saveDayView(input: SaveDayViewInput): Promise<void> {
   });
 }
 
+// All-time visitor count for the site-wide status bar's "visitors since
+// launch" figure — the running sum of every hourly bucket the admin has
+// ever set.
+export async function getAllTimeVisitorTotal(): Promise<number> {
+  const ds = await getDataSource();
+  const row = await ds
+    .getRepository(StatsHourly)
+    .createQueryBuilder("h")
+    .select("COALESCE(SUM(h.visitors), 0)", "total")
+    .getRawOne<{ total: string }>();
+  return Number(row?.total ?? 0);
+}
+
 export interface OnlineRange {
   onlineMin: number;
   onlineMax: number;
