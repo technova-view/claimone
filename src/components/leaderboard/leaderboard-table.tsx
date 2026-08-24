@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Zap } from "lucide-react";
 import type { LeaderboardRow } from "@/lib/types/leaderboard";
 import type { BidScope } from "@/lib/types/scope";
-import { displayHostFor, faviconUrlFor, timeAgo, xAvatarUrlFor } from "@/lib/services/link-display";
+import { displayHostFor, faviconUrlFor, outboundLinkFor, timeAgo, xAvatarUrlFor } from "@/lib/services/link-display";
 import { slugForListing } from "@/lib/services/product-slug";
 import { useAppModals } from "@/components/app-modals/app-modals-provider";
 import { MIN_BID_CENTS } from "@/lib/config/bid-config";
@@ -76,13 +76,13 @@ function MetaLine({
   createdAt,
   categoryName,
   showCategory,
-  showSeeDetails = true,
+  seeDetailsHref,
   className,
 }: {
   createdAt: string;
   categoryName: string;
   showCategory: boolean;
-  showSeeDetails?: boolean;
+  seeDetailsHref?: string;
   className?: string;
 }) {
   return (
@@ -94,7 +94,21 @@ function MetaLine({
           <span className="min-w-0 truncate">{categoryName}</span>
         </>
       )}
-      {showSeeDetails && <span className="ml-auto shrink-0 pl-2 group-hover:underline">see details</span>}
+      {seeDetailsHref && (
+        <>
+          <Dot />
+          {/* position: relative lifts this above the card's stretched
+              outbound-link overlay so it opens the internal detail page
+              instead of the outbound site. */}
+          <Link
+            href={seeDetailsHref}
+            className="group/details relative flex shrink-0 items-center gap-0.5 font-medium text-muted-foreground transition-colors hover:text-primary hover:underline"
+          >
+            see details
+            <ArrowRight className="size-3 shrink-0 transition-transform group-hover/details:translate-x-0.5" />
+          </Link>
+        </>
+      )}
     </span>
   );
 }
@@ -108,11 +122,19 @@ export function LeaderboardTable({
   scope: BidScope;
   categorySlug?: string;
 }) {
-  const { openClaim } = useAppModals();
+  const { openClaim, requestClaimHero } = useAppModals();
   // No effect needed to reset pagination on filter changes — the parent
   // remounts this component (via `key`) whenever the scope/category changes.
   const [page, setPage] = useState(1);
   const showCategory = !categorySlug;
+
+  function handleClaimNow(row: LeaderboardRow) {
+    // Deliberately a smaller +$1 nudge (not the site-wide $5 minimum raise
+    // used to actually take the top spot) — this is just a fast starting
+    // point for the hero form; the user can adjust the amount before
+    // submitting.
+    requestClaimHero(scope, row.categorySlug, row.amountCents + 100);
+  }
 
   if (rows.length === 0) {
     return (
@@ -153,7 +175,7 @@ export function LeaderboardTable({
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3">
         {topThree.map((row) => (
-          <TopThreeRow key={row.id} row={row} showCategory={showCategory} />
+          <TopThreeRow key={row.id} row={row} showCategory={showCategory} onClaimNow={handleClaimNow} />
         ))}
       </div>
 
@@ -170,10 +192,19 @@ export function LeaderboardTable({
 
               return (
                 <li key={row.id} className="border-b border-border last:border-b-0">
-                  <Link
-                    href={`/product/${slugForListing(row)}`}
-                    className="group flex items-center gap-4 py-3 transition-colors hover:bg-secondary/40 sm:py-3.5"
-                  >
+                  <div className="group relative flex items-center gap-4 py-3 transition-colors hover:bg-secondary/40 sm:py-3.5">
+                    {/* Stretched link: clicking anywhere on the row (outside
+                        the controls below, which sit on their own positioned
+                        layer) opens the listing's own site/profile — not the
+                        internal detail page. */}
+                    <a
+                      href={outboundLinkFor(row)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="absolute inset-0"
+                      aria-label={`Visit ${label}`}
+                    />
+
                     <span className="w-8 shrink-0 text-center font-mono text-sm font-semibold text-muted-foreground">
                       #{row.rank}
                     </span>
@@ -196,15 +227,14 @@ export function LeaderboardTable({
                         createdAt={row.createdAt}
                         categoryName={row.categoryName}
                         showCategory={showCategory}
-                        showSeeDetails={false}
+                        seeDetailsHref={`/product/${slugForListing(row)}`}
                         className="mt-0.5"
                       />
                     </span>
-                    {/* Stacked so price, clicks, and "see details" all share
-                        one right edge — clicks sits naturally in the middle
-                        between the other two instead of being centered
-                        against a variable-width neighbor. */}
-                    <span className="flex shrink-0 flex-col items-end gap-1">
+                    {/* Positioned after the stretched link, so it paints on
+                        top and "Claim now" captures its own click instead of
+                        opening the outbound link underneath. */}
+                    <span className="relative flex shrink-0 flex-col items-end gap-1">
                       <span className="font-mono text-sm font-semibold text-primary">
                         {formatAmount(row.amountCents)}
                       </span>
@@ -212,9 +242,16 @@ export function LeaderboardTable({
                         <LiveDot />
                         {placeholderClicks(row.id)} clicks
                       </span>
-                      <span className="text-xs text-muted-foreground group-hover:underline">see details</span>
+                      <button
+                        type="button"
+                        onClick={() => handleClaimNow(row)}
+                        className="inline-flex items-center gap-1 rounded-md border border-primary/40 px-2 py-0.5 text-xs font-semibold text-primary opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 hover:border-primary/60 hover:bg-primary/10"
+                      >
+                        <Zap className="size-3 shrink-0" />
+                        Claim now
+                      </button>
                     </span>
-                  </Link>
+                  </div>
                 </li>
               );
             })}
@@ -256,13 +293,20 @@ export function LeaderboardTable({
   );
 }
 
-function TopThreeRow({ row, showCategory }: { row: LeaderboardRow; showCategory: boolean }) {
+function TopThreeRow({
+  row,
+  showCategory,
+  onClaimNow,
+}: {
+  row: LeaderboardRow;
+  showCategory: boolean;
+  onClaimNow: (row: LeaderboardRow) => void;
+}) {
   const label = row.handle ? `@${row.handle}` : row.url ? displayHostFor(row.url) : "";
   const isLeader = row.rank === 1;
 
   return (
-    <Link
-      href={`/product/${slugForListing(row)}`}
+    <div
       className={cn(
         "group relative flex items-center gap-3 rounded-2xl border p-3 transition-colors sm:p-3.5",
         isLeader
@@ -270,18 +314,36 @@ function TopThreeRow({ row, showCategory }: { row: LeaderboardRow; showCategory:
           : "border-primary/15 bg-accent/40 hover:border-primary/30 hover:bg-accent/60",
       )}
     >
+      {/* Stretched link: clicking anywhere on the card (outside the
+          controls below, which sit on their own positioned layer) opens the
+          listing's own site/profile — not the internal detail page. */}
+      <a
+        href={outboundLinkFor(row)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute inset-0 rounded-2xl"
+        aria-label={`Visit ${label}`}
+      />
+
       {/* Anchored to the card's own corner (not the header row's flex
-          baseline), so it stays put regardless of title length. Stacked the
-          same way as the compact rows below (price / clicks / see details,
-          gap-1) so the spacing between them matches exactly instead of
-          drifting apart depending on each row type's own layout math. */}
+          baseline), so it stays put regardless of title length. Positioned
+          after the stretched link above, so it paints on top and
+          "Claim now" captures its own click instead of opening the
+          outbound link underneath. */}
       <span className="absolute right-3 top-3 flex flex-col items-end gap-1 sm:right-3.5 sm:top-3.5">
         <span className="font-mono text-lg font-bold text-primary sm:text-xl">{formatAmount(row.amountCents)}</span>
         <span className="flex items-center gap-1 text-xs font-semibold text-muted-foreground">
           <LiveDot />
           {placeholderClicks(row.id)} clicks
         </span>
-        <span className="text-xs text-muted-foreground group-hover:underline">see details</span>
+        <button
+          type="button"
+          onClick={() => onClaimNow(row)}
+          className="inline-flex items-center gap-1 rounded-md border border-primary/40 px-2 py-0.5 text-xs font-semibold text-primary opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 hover:border-primary/60 hover:bg-primary/10"
+        >
+          <Zap className="size-3 shrink-0" />
+          Claim now
+        </button>
       </span>
 
       <span
@@ -312,9 +374,9 @@ function TopThreeRow({ row, showCategory }: { row: LeaderboardRow; showCategory:
           createdAt={row.createdAt}
           categoryName={row.categoryName}
           showCategory={showCategory}
-          showSeeDetails={false}
+          seeDetailsHref={`/product/${slugForListing(row)}`}
         />
       </div>
-    </Link>
+    </div>
   );
 }

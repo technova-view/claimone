@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { ArrowUp, AtSign, Globe2, Sparkles, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CategorySelect } from "@/components/category/category-select";
 import { submitBidCheckout } from "@/lib/services/checkout-client";
+import { useAppModals } from "@/components/app-modals/app-modals-provider";
 import { BidScope } from "@/lib/types/scope";
 import { MIN_BID_CENTS, MIN_RAISE_TO_TAKE_TOP_CENTS } from "@/lib/config/bid-config";
 import { cn } from "@/lib/utils";
@@ -81,12 +82,31 @@ export function ClaimHero({
   rowsByScope: Record<BidScope, LeaderboardRow[]>;
   categories: { slug: string; name: string }[];
 }) {
+  const { claimHeroRequest } = useAppModals();
+  const sectionRef = useRef<HTMLElement>(null);
   const [scope, setScope] = useState<BidScope>(BidScope.ALL_TIME);
   const [categorySlug, setCategorySlug] = useState("");
   const [value, setValue] = useState("");
   const [amountCents, setAmountCents] = useState(() => minPriceFor(rowsByScope[BidScope.ALL_TIME], ""));
   const [status, setStatus] = useState<"idle" | "submitting">("idle");
   const [error, setError] = useState<string | null>(null);
+
+  // A "Claim now" button elsewhere on the page (e.g. a leaderboard row) can
+  // ask this hero to prefill itself for outbidding that row and scroll into
+  // view — requestId is bumped on every request so this re-fires even when
+  // the same scope/category/amount is requested twice in a row.
+  useEffect(() => {
+    if (!claimHeroRequest) return;
+    function applyRequest() {
+      if (!claimHeroRequest) return;
+      setScope(claimHeroRequest.scope);
+      setCategorySlug(claimHeroRequest.categorySlug);
+      setAmountCents(claimHeroRequest.amountCents);
+      sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    applyRequest();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on requestId so repeat requests re-fire
+  }, [claimHeroRequest?.requestId]);
 
   const rows = rowsByScope[scope];
   const categoryRows = useMemo(
@@ -140,7 +160,7 @@ export function ClaimHero({
   }
 
   return (
-    <section className="flex flex-col gap-4 py-4">
+    <section ref={sectionRef} className="scroll-mt-24 flex flex-col gap-4 py-4">
       <div className="rounded-2xl border border-border md:grid md:grid-cols-[1.05fr_1fr]">
         {/* Ledger pane */}
         <div className="flex flex-col gap-3 rounded-t-2xl border-b border-border bg-secondary/30 p-5 md:rounded-t-none md:rounded-l-2xl md:border-b-0 md:border-r">
