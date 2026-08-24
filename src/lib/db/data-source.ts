@@ -54,10 +54,23 @@ export async function getDataSource(): Promise<DataSource> {
     const dataSource = createDataSource();
     globalThis.__claimoneDataSource = dataSource;
     globalThis.__claimoneDataSourceBidRef = Bid;
-    globalThis.__claimoneDataSourcePromise = dataSource.initialize().then(async (ds) => {
-      await ensureCategoriesSeeded(ds);
-      return ds;
-    });
+    globalThis.__claimoneDataSourcePromise = dataSource
+      .initialize()
+      .then(async (ds) => {
+        await ensureCategoriesSeeded(ds);
+        return ds;
+      })
+      .catch((error) => {
+        // Don't leave a failed connection attempt (e.g. a transient DNS or
+        // network blip) cached forever — every subsequent call would just
+        // return this same rejected promise, permanently breaking the app
+        // until the process restarts even after the network recovers.
+        // Clear the cache so the next call gets a fresh attempt.
+        globalThis.__claimoneDataSource = undefined;
+        globalThis.__claimoneDataSourcePromise = undefined;
+        globalThis.__claimoneDataSourceBidRef = undefined;
+        throw error;
+      });
   }
 
   return globalThis.__claimoneDataSourcePromise;
