@@ -67,8 +67,8 @@ export default function PrivacyPage() {
               waliurrahman957@gmail.com
             </a>{" "}
             or{" "}
-            <a href="mailto:technova.view@gmail.com" className="text-primary hover:underline">
-              technova.view@gmail.com
+            <a href="mailto:claimone.lol@gmail.com" className="text-primary hover:underline">
+              claimone.lol@gmail.com
             </a>
             .
           </p>

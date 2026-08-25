@@ -92,8 +92,8 @@ export default function TermsPage() {
               waliurrahman957@gmail.com
             </a>{" "}
             or{" "}
-            <a href="mailto:technova.view@gmail.com" className="text-primary hover:underline">
-              technova.view@gmail.com
+            <a href="mailto:claimone.lol@gmail.com" className="text-primary hover:underline">
+              claimone.lol@gmail.com
             </a>
             , or reach out via X:{" "}
             <a href="https://x.com/MarufSalim35872" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">

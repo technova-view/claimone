@@ -2,13 +2,6 @@
 
 import Link from "next/link";
 
-const NAV_LINKS = [
-  { href: "/categories", label: "Categories" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/about", label: "About" },
-  { href: "/stats", label: "Stats" },
-];
-
 const LEGAL_LINKS = [
   { href: "/terms", label: "Terms" },
   { href: "/privacy", label: "Privacy" },
@@ -20,7 +13,7 @@ const FOUNDERS = [
   { handle: "Waliur57" },
 ];
 
-const CONTACT_EMAILS = ["waliurrahman957@gmail.com", "technova.view@gmail.com"];
+const CONTACT_EMAILS = ["waliurrahman957@gmail.com", "claimone.lol@gmail.com"];
 
 export function SiteFooter() {
   return (
@@ -43,22 +36,11 @@ export function SiteFooter() {
           ))}
         </p>
 
-        <nav className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
-          {NAV_LINKS.map((link, i) => (
-            <span key={link.href} className="flex items-center gap-2">
-              {i > 0 && <span className="text-border">·</span>}
-              <Link href={link.href} className="transition-colors hover:text-foreground">
-                {link.label}
-              </Link>
-            </span>
-          ))}
-        </nav>
-
         <nav className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
           {LEGAL_LINKS.map((link, i) => (
             <span key={link.href} className="flex items-center gap-2">
-              {i > 0 && <span className="text-border">·</span>}
-              <Link href={link.href} className="transition-colors hover:text-foreground">
+              {i > 0 && <span className="text-base text-muted-foreground/60">·</span>}
+              <Link href={link.href} className="transition-colors hover:text-primary hover:underline">
                 {link.label}
               </Link>
             </span>
@@ -68,8 +50,8 @@ export function SiteFooter() {
         <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
           {CONTACT_EMAILS.map((email, i) => (
             <span key={email} className="flex items-center gap-2">
-              {i > 0 && <span className="text-border">·</span>}
-              <a href={`mailto:${email}`} className="transition-colors hover:text-foreground">
+              {i > 0 && <span className="text-base text-muted-foreground/60">·</span>}
+              <a href={`mailto:${email}`} className="transition-colors hover:text-primary hover:underline">
                 {email}
               </a>
             </span>
