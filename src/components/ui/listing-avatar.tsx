@@ -39,7 +39,7 @@ export function ListingAvatar({
   const isFavicon = !handle;
 
   return (
-    <span className={cn("shrink-0 overflow-hidden border border-border bg-secondary", size, radius, className)}>
+    <span className={cn("flex shrink-0 overflow-hidden border border-border bg-secondary", size, radius, className)}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={src} alt="" className={cn("h-full w-full object-cover", isFavicon && "scale-150")} />
     </span>
