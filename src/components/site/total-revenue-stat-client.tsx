@@ -61,7 +61,7 @@ export function TotalRevenueStatClient() {
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground">raised since launch</p>
+      <p className="text-xs text-muted-foreground">claimed since launch</p>
     </div>
   );
 }
