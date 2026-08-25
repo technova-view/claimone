@@ -325,3 +325,21 @@ export async function hasPendingBidMatchingSlug(slug: string): Promise<boolean> 
   });
   return recentPending.some((bid) => slugForListing(bid).toLowerCase() === slug.toLowerCase());
 }
+
+// Real cumulative revenue since launch — every bid that ever actually got
+// paid for (ACTIVE or ARCHIVED both imply activateBid() ran), excluding
+// admin-injected fake rows. Unlike getLeaderboard's per-scope sum, this
+// never drops when a listing gets outbid, archived, or a period resets —
+// archived bids keep their amountCents specifically so this figure stays
+// accurate.
+export async function getTotalRevenueCents(): Promise<number> {
+  const ds = await getDataSource();
+  const row = await ds
+    .getRepository(Bid)
+    .createQueryBuilder("bid")
+    .select("COALESCE(SUM(bid.amountCents), 0)", "total")
+    .where("bid.status IN (:...statuses)", { statuses: [BidStatus.ACTIVE, BidStatus.ARCHIVED] })
+    .andWhere("bid.isFake = false")
+    .getRawOne<{ total: string }>();
+  return Number(row?.total ?? 0);
+}

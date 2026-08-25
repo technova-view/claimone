@@ -19,8 +19,10 @@ export default async function HomePage() {
   return (
     <div className="flex flex-1 flex-col">
       <SiteHeader />
-      <StatusBar />
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-10 px-6 pb-8 pt-2">
+      <div className="flex flex-wrap items-center justify-center gap-4 px-4 pt-2 pb-1">
+        <StatusBar />
+      </div>
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 px-6 pb-8">
         <ClaimHero
           rowsByScope={{
             [BidScope.ALL_TIME]: allTimeRows,

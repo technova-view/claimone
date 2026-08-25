@@ -24,10 +24,10 @@ export function SiteHeader() {
   const logoSrc = mounted && resolvedTheme === "dark" ? "/claimone-logo-dark.png" : "/claimone-logo-light.png";
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/80 bg-background/85 backdrop-blur-md">
+    <header className="sticky top-0 z-40 bg-background/85 backdrop-blur-md">
       <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-6 py-3">
         <Link href="/" className="flex items-center">
-          <Image src={logoSrc} alt="ClaimOne" width={1030} height={370} className="h-16 w-auto" priority />
+          <Image src={logoSrc} alt="ClaimOne" width={1030} height={370} className="h-14 w-auto" priority />
         </Link>
 
         <div className="flex items-center gap-4">

@@ -10,6 +10,7 @@ import { slugForListing } from "@/lib/services/product-slug";
 import { useAppModals } from "@/components/app-modals/app-modals-provider";
 import { LiveDot } from "@/components/ui/live-dot";
 import { ListingAvatar } from "@/components/ui/listing-avatar";
+import { TotalRevenueStatClient } from "@/components/site/total-revenue-stat-client";
 import { MIN_BID_CENTS } from "@/lib/config/bid-config";
 import { cn } from "@/lib/utils";
 
@@ -254,6 +255,10 @@ export function LeaderboardTable({
           </div>
         </div>
       )}
+
+      <div className="flex justify-center">
+        <TotalRevenueStatClient />
+      </div>
     </div>
   );
 }
