@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
+import { Trophy } from "lucide-react";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { useAppModals } from "@/components/app-modals/app-modals-provider";
 import { BidScope } from "@/lib/types/scope";
@@ -74,6 +75,13 @@ export function SiteHeader() {
                 {link.label}
               </a>
             ))}
+            <Link
+              href="/hall-of-fame"
+              className="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <Trophy className="size-3.5 shrink-0" />
+              Hall of fame
+            </Link>
           </nav>
 
           <ThemeToggle />

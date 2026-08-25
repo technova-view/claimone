@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { Loader2, Trophy } from "lucide-react";
 import { BidScope } from "@/lib/types/scope";
 import { slugFromScope } from "@/lib/services/scope-slug";
@@ -21,7 +22,7 @@ export function LeaderboardSection({
   // Scope is driven by the toggle in SiteHeader (shown only on this page),
   // not owned here — a single source of truth shared across the header
   // instead of this section having its own separate toggle.
-  const { openHallOfFame, homeScope: scope } = useAppModals();
+  const { homeScope: scope } = useAppModals();
   const [categorySlug, setCategorySlug] = useState<string | null>(null);
   const [filteredRows, setFilteredRows] = useState<LeaderboardRow[] | null>(null);
   // The key of the filter that filteredRows currently reflects. When it
@@ -73,14 +74,13 @@ export function LeaderboardSection({
       {scope !== BidScope.ALL_TIME && (
         <div className="flex items-center justify-center gap-2">
           <Countdown scope={scope === BidScope.DAILY ? "daily" : "weekly"} />
-          <button
-            type="button"
-            onClick={() => openHallOfFame(scope === BidScope.DAILY ? "daily" : "weekly")}
+          <Link
+            href={`/hall-of-fame?scope=${scope === BidScope.DAILY ? "daily" : "weekly"}`}
             className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
           >
             <Trophy className="size-3.5 shrink-0" />
             Hall of fame
-          </button>
+          </Link>
         </div>
       )}
 

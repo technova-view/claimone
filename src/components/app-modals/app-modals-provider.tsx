@@ -2,10 +2,7 @@
 
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
 import { ClaimModal, type ClaimTarget } from "@/components/claim/claim-modal";
-import { HallOfFameModal } from "@/components/leaderboard/hall-of-fame-modal";
 import { BidScope } from "@/lib/types/scope";
-
-type HallOfFameScopeSlug = "daily" | "weekly";
 
 export interface ClaimHeroRequest {
   // Bumped on every call so effects keyed on this re-fire even when a user
@@ -18,7 +15,6 @@ export interface ClaimHeroRequest {
 
 interface AppModalsContextValue {
   openClaim: (target: ClaimTarget) => void;
-  openHallOfFame: (scope: HallOfFameScopeSlug) => void;
   claimHeroRequest: ClaimHeroRequest | null;
   requestClaimHero: (scope: BidScope, categorySlug: string, amountCents: number) => void;
   // Which board (All-time/Daily/Weekly) the homepage leaderboard shows —
@@ -39,21 +35,19 @@ export function useAppModals(): AppModalsContextValue {
 
 export function AppModalsProvider({ children }: { children: ReactNode }) {
   const [claimTarget, setClaimTarget] = useState<ClaimTarget | null>(null);
-  const [hofScope, setHofScope] = useState<HallOfFameScopeSlug | null>(null);
   const [claimHeroRequest, setClaimHeroRequest] = useState<ClaimHeroRequest | null>(null);
   const claimHeroRequestId = useRef(0);
   const [homeScope, setHomeScope] = useState<BidScope>(BidScope.ALL_TIME);
 
   const openClaim = useCallback((target: ClaimTarget) => setClaimTarget(target), []);
-  const openHallOfFame = useCallback((scope: HallOfFameScopeSlug) => setHofScope(scope), []);
   const requestClaimHero = useCallback((scope: BidScope, categorySlug: string, amountCents: number) => {
     claimHeroRequestId.current += 1;
     setClaimHeroRequest({ requestId: claimHeroRequestId.current, scope, categorySlug, amountCents });
   }, []);
 
   const value = useMemo(
-    () => ({ openClaim, openHallOfFame, claimHeroRequest, requestClaimHero, homeScope, setHomeScope }),
-    [openClaim, openHallOfFame, claimHeroRequest, requestClaimHero, homeScope],
+    () => ({ openClaim, claimHeroRequest, requestClaimHero, homeScope, setHomeScope }),
+    [openClaim, claimHeroRequest, requestClaimHero, homeScope],
   );
 
   return (
@@ -63,11 +57,6 @@ export function AppModalsProvider({ children }: { children: ReactNode }) {
         target={claimTarget}
         open={claimTarget !== null}
         onOpenChange={(open) => !open && setClaimTarget(null)}
-      />
-      <HallOfFameModal
-        scope={hofScope}
-        open={hofScope !== null}
-        onOpenChange={(open) => !open && setHofScope(null)}
       />
     </AppModalsContext.Provider>
   );

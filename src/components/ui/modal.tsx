@@ -14,7 +14,7 @@ export function Modal({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  title: string;
+  title: ReactNode;
   children: ReactNode;
   className?: string;
 }) {
