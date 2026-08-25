@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, Trophy } from "lucide-react";
 import { BidScope } from "@/lib/types/scope";
 import { slugFromScope } from "@/lib/services/scope-slug";
@@ -11,12 +11,6 @@ import { useAppModals } from "@/components/app-modals/app-modals-provider";
 import { cn } from "@/lib/utils";
 import type { LeaderboardRow } from "@/lib/types/leaderboard";
 
-const SCOPE_OPTIONS: { value: BidScope; label: string }[] = [
-  { value: BidScope.ALL_TIME, label: "All time" },
-  { value: BidScope.DAILY, label: "Daily" },
-  { value: BidScope.WEEKLY, label: "Weekly" },
-];
-
 export function LeaderboardSection({
   initialRowsByScope,
   categories,
@@ -24,8 +18,10 @@ export function LeaderboardSection({
   initialRowsByScope: Record<BidScope, LeaderboardRow[]>;
   categories: { slug: string; name: string }[];
 }) {
-  const { openHallOfFame } = useAppModals();
-  const [scope, setScope] = useState<BidScope>(BidScope.ALL_TIME);
+  // Scope is driven by the toggle in SiteHeader (shown only on this page),
+  // not owned here — a single source of truth shared across the header
+  // instead of this section having its own separate toggle.
+  const { openHallOfFame, homeScope: scope } = useAppModals();
   const [categorySlug, setCategorySlug] = useState<string | null>(null);
   const [filteredRows, setFilteredRows] = useState<LeaderboardRow[] | null>(null);
   // The key of the filter that filteredRows currently reflects. When it
@@ -54,12 +50,17 @@ export function LeaderboardSection({
     };
   }, [desiredKey, scopeSlug, categorySlug]);
 
-  function handleScopeChange(next: BidScope) {
-    setScope(next);
+  // The category filter is local to whichever board is being viewed — reset
+  // it when the header toggle switches boards, same as the old in-component
+  // toggle used to do.
+  const lastHandledScopeRef = useRef(scope);
+  useEffect(() => {
+    if (lastHandledScopeRef.current === scope) return;
+    lastHandledScopeRef.current = scope;
     setCategorySlug(null);
     setFilteredRows(null);
     setResolvedKey(null);
-  }
+  }, [scope]);
 
   function handleCategoryChange(next: string | null) {
     setCategorySlug(next);
@@ -69,36 +70,19 @@ export function LeaderboardSection({
 
   return (
     <section id="leaderboard" className="scroll-mt-24 flex flex-col gap-5">
-      <div className="flex flex-col items-center gap-5">
-        <div className="flex gap-1 rounded-full border border-border bg-secondary p-1">
-          {SCOPE_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => handleScopeChange(opt.value)}
-              className={cn(
-                "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
-                scope === opt.value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {opt.label}
-            </button>
-          ))}
+      {scope !== BidScope.ALL_TIME && (
+        <div className="flex items-center justify-center gap-2">
+          <Countdown scope={scope === BidScope.DAILY ? "daily" : "weekly"} />
+          <button
+            type="button"
+            onClick={() => openHallOfFame(scope === BidScope.DAILY ? "daily" : "weekly")}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+          >
+            <Trophy className="size-3.5 shrink-0" />
+            Hall of fame
+          </button>
         </div>
-        {scope !== BidScope.ALL_TIME && (
-          <div className="flex items-center gap-2">
-            <Countdown scope={scope === BidScope.DAILY ? "daily" : "weekly"} />
-            <button
-              type="button"
-              onClick={() => openHallOfFame(scope === BidScope.DAILY ? "daily" : "weekly")}
-              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
-            >
-              <Trophy className="size-3.5 shrink-0" />
-              Hall of fame
-            </button>
-          </div>
-        )}
-      </div>
+      )}
 
       <div id="categories" className="scroll-mt-24 flex min-w-0 items-center gap-2">
         <CategoryFilterPills categories={categories} activeSlug={categorySlug} onChange={handleCategoryChange} />

@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
 import { ClaimModal, type ClaimTarget } from "@/components/claim/claim-modal";
 import { HallOfFameModal } from "@/components/leaderboard/hall-of-fame-modal";
-import type { BidScope } from "@/lib/types/scope";
+import { BidScope } from "@/lib/types/scope";
 
 type HallOfFameScopeSlug = "daily" | "weekly";
 
@@ -21,6 +21,12 @@ interface AppModalsContextValue {
   openHallOfFame: (scope: HallOfFameScopeSlug) => void;
   claimHeroRequest: ClaimHeroRequest | null;
   requestClaimHero: (scope: BidScope, categorySlug: string, amountCents: number) => void;
+  // Which board (All-time/Daily/Weekly) the homepage leaderboard shows —
+  // lives here so the toggle in SiteHeader, which renders on every page,
+  // can read and drive it. Unrelated to ClaimHero's own separate scope
+  // toggle (which board to bid into).
+  homeScope: BidScope;
+  setHomeScope: (scope: BidScope) => void;
 }
 
 const AppModalsContext = createContext<AppModalsContextValue | null>(null);
@@ -36,6 +42,7 @@ export function AppModalsProvider({ children }: { children: ReactNode }) {
   const [hofScope, setHofScope] = useState<HallOfFameScopeSlug | null>(null);
   const [claimHeroRequest, setClaimHeroRequest] = useState<ClaimHeroRequest | null>(null);
   const claimHeroRequestId = useRef(0);
+  const [homeScope, setHomeScope] = useState<BidScope>(BidScope.ALL_TIME);
 
   const openClaim = useCallback((target: ClaimTarget) => setClaimTarget(target), []);
   const openHallOfFame = useCallback((scope: HallOfFameScopeSlug) => setHofScope(scope), []);
@@ -45,8 +52,8 @@ export function AppModalsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ openClaim, openHallOfFame, claimHeroRequest, requestClaimHero }),
-    [openClaim, openHallOfFame, claimHeroRequest, requestClaimHero],
+    () => ({ openClaim, openHallOfFame, claimHeroRequest, requestClaimHero, homeScope, setHomeScope }),
+    [openClaim, openHallOfFame, claimHeroRequest, requestClaimHero, homeScope],
   );
 
   return (

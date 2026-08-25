@@ -22,7 +22,7 @@ export default async function HomePage() {
       <div className="flex flex-wrap items-center justify-center gap-4 px-4 pt-2 pb-1">
         <StatusBar />
       </div>
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 px-6 pb-8">
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-5 px-6 pb-8">
         <ClaimHero
           rowsByScope={{
             [BidScope.ALL_TIME]: allTimeRows,

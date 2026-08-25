@@ -73,7 +73,7 @@ function buildLedger(categoryRows: LeaderboardRow[], amountCents: number, ghostL
 }
 
 const stepperClass =
-  "flex size-8 shrink-0 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary disabled:pointer-events-none disabled:opacity-40";
+  "flex size-10 shrink-0 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary disabled:pointer-events-none disabled:opacity-40";
 
 export function ClaimHero({
   rowsByScope,
@@ -160,8 +160,8 @@ export function ClaimHero({
   }
 
   return (
-    <section ref={sectionRef} className="scroll-mt-24 flex flex-col gap-4 py-4">
-      <div className="rounded-2xl border border-border md:grid md:grid-cols-[1.05fr_1fr]">
+    <section ref={sectionRef} className="scroll-mt-24 flex flex-col gap-4 pt-4">
+      <div className="rounded-2xl border border-border md:grid md:grid-cols-[40%_60%]">
         {/* Ledger pane */}
         <div className="flex flex-col gap-3 rounded-t-2xl border-b border-border bg-secondary/30 p-5 md:rounded-t-none md:rounded-l-2xl md:border-b-0 md:border-r">
           <ol className="flex flex-col gap-1 font-mono text-sm tabular-nums">
@@ -264,32 +264,26 @@ export function ClaimHero({
             </div>
           </div>
 
-          <div className="relative">
-            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">
-              {looksLikeHandle ? <AtSign className="size-4" /> : <Globe2 className="size-4" />}
-            </span>
-            <input
-              type="text"
-              required
-              placeholder="Your product URL or @handle"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              className="w-full rounded-xl border border-input bg-background py-2.5 pl-9 pr-3.5 text-sm outline-none transition-shadow focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-            />
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Your bid</span>
-              {takesTop && (
-                <span className="text-xs font-medium text-primary">{ledger.isEmpty ? "Be the first" : "Takes #1"}</span>
-              )}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative min-w-0 sm:flex-3">
+              <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+                {looksLikeHandle ? <AtSign className="size-4" /> : <Globe2 className="size-4" />}
+              </span>
+              <input
+                type="text"
+                required
+                placeholder="Your product URL or @handle"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                className="w-full rounded-xl border border-input bg-background py-2.5 pl-9 pr-3.5 text-sm outline-none transition-shadow focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              />
             </div>
-            <div className="mt-1.5 flex items-center gap-2">
+
+            <div className="flex items-center gap-2 sm:flex-2">
               <button type="button" onClick={() => step(-1)} disabled={amountCents <= MIN_BID_CENTS} className={stepperClass} aria-label="Decrease amount">
                 −
               </button>
-              <div className="relative min-w-[8ch] flex-1">
+              <div className="relative min-w-0 flex-1">
                 <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 font-mono text-lg font-bold text-primary">
                   $
                 </span>
@@ -313,9 +307,15 @@ export function ClaimHero({
                 +
               </button>
             </div>
-            <p className={cn("mt-1.5 text-xs text-muted-foreground", categorySlug && "invisible")}>
+          </div>
+
+          <div className="-mt-1 flex items-center justify-between gap-3">
+            <p className={cn("text-xs text-muted-foreground", categorySlug && "invisible")}>
               Pick a category to place this bid.
             </p>
+            {takesTop && (
+              <span className="text-xs font-medium text-primary">{ledger.isEmpty ? "Be the first" : "Takes #1"}</span>
+            )}
           </div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
