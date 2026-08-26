@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { Loader2, Trophy } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { BidScope } from "@/lib/types/scope";
 import { slugFromScope } from "@/lib/services/scope-slug";
 import { CategoryFilterPills } from "@/components/category/category-filter-pills";
@@ -72,15 +71,8 @@ export function LeaderboardSection({
   return (
     <section id="leaderboard" className="scroll-mt-24 flex flex-col gap-5">
       {scope !== BidScope.ALL_TIME && (
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center">
           <Countdown scope={scope === BidScope.DAILY ? "daily" : "weekly"} />
-          <Link
-            href={`/hall-of-fame?scope=${scope === BidScope.DAILY ? "daily" : "weekly"}`}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
-          >
-            <Trophy className="size-3.5 shrink-0" />
-            Hall of fame
-          </Link>
         </div>
       )}
 
