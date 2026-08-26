@@ -17,7 +17,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "claimone.lol",
-  description: "Pay to claim a spot on the leaderboard.",
+  description: "Public product rankings, determined by your bid.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

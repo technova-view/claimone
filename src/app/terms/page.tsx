@@ -29,16 +29,25 @@ export default function TermsPage() {
         <section className="flex flex-col gap-2">
           <h2 className="text-lg font-semibold">1. What ClaimOne Is</h2>
           <p className="text-muted-foreground">
-            ClaimOne is a public product-discovery platform that organizes submitted product websites and X profiles
-            into category-based leaderboards.
+            ClaimOne is a paid public ranking and product-discovery platform. Customers may pay to list an eligible
+            product website or X profile and obtain a leaderboard position based on the amount paid, according to
+            the published{" "}
+            <a href="/rules" className="text-primary hover:underline">
+              Rules
+            </a>
+            .
           </p>
           <p className="text-muted-foreground">
-            A listing&rsquo;s position is determined by its current bid amount under the ranking rules published on
-            ClaimOne. Higher bid amounts receive higher positions within the applicable leaderboard.
+            A payment purchases leaderboard placement. It does not guarantee traffic, clicks, customers, revenue,
+            sales, conversions, search-engine rankings, or a particular final position.
           </p>
           <p className="text-muted-foreground">
             ClaimOne does not operate a lottery, prize pool, betting system, or random-selection system. Payments
             made through ClaimOne do not create a monetary prize or payout for users.
+          </p>
+          <p className="text-muted-foreground">
+            You must be of legal age to enter into binding transactions in your jurisdiction to make a payment
+            through ClaimOne.
           </p>
         </section>
 
@@ -63,8 +72,8 @@ export default function TermsPage() {
             <li>Any other content that ClaimOne reasonably determines is inappropriate for the platform.</li>
           </ul>
           <p className="text-muted-foreground">
-            Query parameters and tracking parameters may be removed from submitted URLs. Affiliate, referral, and
-            tracking URLs may therefore not function as submitted.
+            Submitted URLs are stored as provided, with &ldquo;https://&rdquo; added automatically if it&rsquo;s
+            missing. No other part of the URL is modified.
           </p>
         </section>
 
@@ -101,12 +110,18 @@ export default function TermsPage() {
         <section className="flex flex-col gap-2">
           <h2 className="text-lg font-semibold">4. Raising an Existing Listing</h2>
           <p className="text-muted-foreground">
-            If you submit the same eligible website or X handle again, ClaimOne may treat the new transaction as an
-            increase to that listing&rsquo;s existing bid.
+            If you submit the same eligible website or X handle again at a higher bid, ClaimOne treats it as a new
+            listing at that full bid amount, which supersedes and replaces your prior listing for the same
+            website/handle in that category and leaderboard once payment is confirmed.
           </p>
           <p className="text-muted-foreground">
-            Where ClaimOne displays an incremental amount, you pay only the amount required to increase the listing
-            according to the current ranking rules.
+            You are charged the full amount of the new bid, not only the difference from your previous bid. The
+            amount previously paid for the superseded listing is not refunded or credited toward the new one — see
+            our{" "}
+            <a href="/refund-policy" className="text-primary hover:underline">
+              Refund Policy
+            </a>
+            .
           </p>
           <p className="text-muted-foreground">ClaimOne&rsquo;s interface at the time of the transaction controls the amount charged.</p>
         </section>

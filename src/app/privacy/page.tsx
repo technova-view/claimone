@@ -120,18 +120,25 @@ export default function PrivacyPage() {
 
         <section className="flex flex-col gap-2">
           <h2 className="text-lg font-semibold">7. Third-Party Services</h2>
-          <p className="text-muted-foreground">ClaimOne may use third-party providers for services such as:</p>
+          <p className="text-muted-foreground">ClaimOne currently uses these third-party providers to operate the service:</p>
           <ul className="flex list-disc flex-col gap-1.5 pl-5 text-muted-foreground">
-            <li>Payment processing;</li>
-            <li>Hosting and infrastructure;</li>
-            <li>Database services;</li>
-            <li>Security;</li>
-            <li>Email or customer support; and</li>
-            <li>Other technical services required to operate ClaimOne.</li>
+            <li>
+              <span className="font-medium text-foreground">Paddle</span> — payment processing, billing, tax, and
+              fraud prevention for transactions;
+            </li>
+            <li>
+              <span className="font-medium text-foreground">Vercel</span> — application hosting and infrastructure;
+              and
+            </li>
+            <li>
+              <span className="font-medium text-foreground">Supabase</span> — our Postgres database, storing listing
+              and transaction records.
+            </li>
           </ul>
           <p className="text-muted-foreground">
             These providers may process information only as necessary to provide their services or comply with
-            applicable law.
+            applicable law. We do not currently use third-party analytics or advertising-tracking services. If that
+            changes, this notice will be updated accordingly.
           </p>
         </section>
 

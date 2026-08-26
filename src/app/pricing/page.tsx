@@ -20,9 +20,9 @@ export default function PricingPage() {
           <h1 className="text-3xl font-semibold tracking-tight">Pricing</h1>
           <p className="mt-2 text-muted-foreground">ClaimOne does not use subscriptions or recurring plans.</p>
           <p className="mt-2 text-muted-foreground">
-            Each listing is purchased as a one-time digital service. You choose the amount you want to contribute to
-            your listing, and that amount determines its position according to the applicable leaderboard&rsquo;s
-            ranking rules.
+            Each listing is purchased as a one-time digital service. You choose the amount you want to bid for your
+            listing, and that bid determines its position according to the applicable leaderboard&rsquo;s ranking
+            rules.
           </p>
         </div>
 
@@ -87,37 +87,59 @@ export default function PricingPage() {
           <p className="text-muted-foreground">Each leaderboard has its own ranking and bid amounts.</p>
         </section>
 
-        <section className="flex flex-col gap-2">
-          <h2 className="text-lg font-semibold">What you receive</h2>
+        <section className="flex flex-col gap-3">
+          <h2 className="text-lg font-semibold">What you purchase</h2>
           <p className="text-muted-foreground">
-            After successful payment, your listing is activated and displayed on the applicable{" "}
+            Your purchase activates a public listing on{" "}
             <Link href="/" className="text-primary hover:underline">
-              ClaimOne leaderboard
-            </Link>
-            .
+              ClaimOne
+            </Link>{" "}
+            and assigns it a leaderboard position according to the applicable ranking rules.
           </p>
-          <p className="text-muted-foreground">Your purchase provides:</p>
+          <p className="text-muted-foreground">Your purchase includes:</p>
           <ul className="flex list-disc flex-col gap-1.5 pl-5 text-muted-foreground">
-            <li>A public product or X profile listing;</li>
-            <li>Placement within the selected category;</li>
-            <li>A leaderboard position determined by your bid; and</li>
             <li>
-              Continued placement while your bid remains sufficient for that position, subject to the applicable
-              leaderboard rules.
+              <span className="font-medium text-foreground">Public listing</span> — Your product website or X profile
+              is displayed on ClaimOne.
+            </li>
+            <li>
+              <span className="font-medium text-foreground">Category placement</span> — Your listing appears in the
+              category you selected.
+            </li>
+            <li>
+              <span className="font-medium text-foreground">Leaderboard ranking</span> — Your bid determines your
+              position relative to other eligible listings.
+            </li>
+            <li>
+              <span className="font-medium text-foreground">Instant activation</span> — Your listing becomes active
+              after successful payment confirmation.
             </li>
           </ul>
+
+          <h3 className="mt-2 text-base font-semibold">What your purchase does not guarantee</h3>
           <p className="text-muted-foreground">
-            ClaimOne does not guarantee a particular number of visitors, clicks, leads, sales, followers, or other
-            commercial results.
+            ClaimOne provides leaderboard placement, not guaranteed marketing results. A purchase does not guarantee:
+          </p>
+          <ul className="flex list-disc flex-col gap-1.5 pl-5 text-muted-foreground">
+            <li>A specific number of visitors or clicks</li>
+            <li>Customers, leads, or sales</li>
+            <li>Followers or conversions</li>
+            <li>A permanent position on the leaderboard</li>
+            <li>Search-engine rankings</li>
+            <li>Any financial return</li>
+          </ul>
+          <p className="text-muted-foreground">
+            Your ranking can change when other eligible listings increase their bids or when a Daily or Weekly
+            leaderboard resets.
           </p>
         </section>
 
         <section className="flex flex-col gap-2">
           <h2 className="text-lg font-semibold">Payment and delivery</h2>
-          <p className="text-muted-foreground">Checkout is handled by Paddle, our payment provider and Merchant of Record.</p>
+          <p className="text-muted-foreground">Checkout is handled securely by our payment provider and Merchant of Record.</p>
           <p className="text-muted-foreground">
-            Paddle processes the payment and may display the transaction in your local currency and calculate
-            applicable taxes at checkout.
+            Our payment provider processes the payment and may display the transaction in your local currency and
+            calculate applicable taxes at checkout.
           </p>
           <p className="text-muted-foreground">
             Your listing becomes active after payment is successfully confirmed. No software download, installation,

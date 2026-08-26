@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { Briefcase, Crown, DollarSign, Eye, Layers, RefreshCw, Sparkles, Trophy, Zap } from "lucide-react";
+import { Briefcase, CheckCircle2, Crown, DollarSign, Eye, Layers, RefreshCw, Sparkles, Trophy, XCircle, Zap } from "lucide-react";
 import { SiteHeader } from "@/components/site/site-header";
 import { LinkedInIcon, XIcon } from "@/components/icons/social-icons";
 import { LiveDot } from "@/components/ui/live-dot";
@@ -25,22 +25,22 @@ const STEPS = [
   {
     icon: Layers,
     title: "Pick a category",
-    body: "Every listing lives inside a category, so you're only ever competing against products in your own space.",
+    body: "Every listing lives inside a category, so rankings are determined among products in the same category.",
   },
   {
     icon: DollarSign,
     title: "Set your bid",
-    body: "Your rank is exactly what you pay for it — the highest bid in a category holds #1, no algorithm involved.",
+    body: "Your bid determines your rank. Rankings are calculated according to the published ClaimOne rules, with the highest qualifying bid holding the top position.",
   },
   {
     icon: Zap,
     title: "Checkout instantly",
-    body: "Pay securely through Paddle. Your listing goes live the moment payment is confirmed.",
+    body: "Pay securely at checkout. Your listing goes live the moment payment is confirmed.",
   },
   {
     icon: Trophy,
-    title: "Hold the rank",
-    body: "You keep your spot until someone outbids you — or resets it in the Daily and Weekly boards.",
+    title: "Maintain your position",
+    body: "Your position can change when another eligible listing reaches a higher qualifying bid, or when a Daily or Weekly leaderboard resets.",
   },
 ];
 
@@ -82,18 +82,18 @@ const FOUNDERS: {
 const PRINCIPLES = [
   {
     icon: DollarSign,
-    title: "Transparent pricing",
-    body: `Rank is bid amount, full stop. Minimum listing is ${formatAmount(MIN_BID_CENTS)}, and taking #1 costs at least ${formatAmount(MIN_RAISE_TO_TAKE_TOP_CENTS)} more than the current leader.`,
+    title: "Transparent ranking",
+    body: `The amount required for each position is visible on the leaderboard before payment. To reach #1, a listing must meet the applicable minimum increase above the current #1 bid — currently at least ${formatAmount(MIN_RAISE_TO_TAKE_TOP_CENTS)}. Minimum to list is ${formatAmount(MIN_BID_CENTS)}.`,
   },
   {
     icon: RefreshCw,
-    title: "Fair, global resets",
-    body: "Daily and Weekly boards reset on a fixed UTC schedule — the same clock for every timezone, not whichever region 'midnight' happens to favor.",
+    title: "Consistent resets",
+    body: "Daily and Weekly leaderboards reset according to a fixed UTC schedule, providing the same reset time worldwide.",
   },
   {
     icon: Crown,
-    title: "Past winners remembered",
-    body: "Every Daily and Weekly cycle's top spot is archived to the Hall of Fame instead of just disappearing when it resets.",
+    title: "Public history",
+    body: "Completed Daily and Weekly leaderboard periods may be archived in the Hall of Fame so previous top-ranked listings remain part of ClaimOne's public history.",
   },
 ];
 
@@ -118,10 +118,10 @@ export default async function AboutPage() {
             <span className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <Crown className="size-5" />
             </span>
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">A leaderboard you can buy your way onto</h1>
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Public product rankings, determined by your bid.</h1>
             <p className="max-w-xl text-muted-foreground">
-              claimone.lol is a pay-to-rank leaderboard. List any product or profile in a category, and the highest
-              bidder holds the top spot — plainly, transparently, with nothing hidden behind an algorithm.
+              Submit a product or X profile, choose your bid, and receive public leaderboard placement in your
+              category.
             </p>
           </div>
         </div>
@@ -198,9 +198,45 @@ export default async function AboutPage() {
           </div>
         </div>
 
+        {/* What you get */}
+        <div className="flex flex-col gap-5">
+          <div>
+            <h2 className="text-xl font-semibold tracking-tight">What you get</h2>
+            <p className="mt-1 text-muted-foreground">
+              Your purchase activates a public listing on ClaimOne and assigns it a leaderboard position according to
+              the applicable ranking rules.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl border border-border bg-card p-4">
+              <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                <CheckCircle2 className="size-4 shrink-0 text-primary" />
+                Included
+              </p>
+              <ul className="mt-2 flex list-disc flex-col gap-1 pl-5 text-sm text-muted-foreground">
+                <li>A public product or X profile listing</li>
+                <li>Placement within your selected category</li>
+                <li>A public leaderboard position determined by your bid</li>
+              </ul>
+            </div>
+            <div className="rounded-2xl border border-border bg-card p-4">
+              <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                <XCircle className="size-4 shrink-0 text-muted-foreground" />
+                Not guaranteed
+              </p>
+              <ul className="mt-2 flex list-disc flex-col gap-1 pl-5 text-sm text-muted-foreground">
+                <li>Traffic, clicks, or followers</li>
+                <li>Customers, sales, or conversions</li>
+                <li>A permanent position</li>
+                <li>Any financial return</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
         {/* Principles */}
         <div className="flex flex-col gap-5">
-          <h2 className="text-xl font-semibold tracking-tight">What makes it fair</h2>
+          <h2 className="text-xl font-semibold tracking-tight">Transparent and predictable</h2>
           <div className="flex flex-col divide-y divide-border rounded-2xl border border-border bg-card">
             {PRINCIPLES.map((principle) => (
               <div key={principle.title} className="flex gap-3 p-4">
@@ -220,7 +256,7 @@ export default async function AboutPage() {
         <div className="relative overflow-hidden rounded-3xl border border-primary/30 bg-accent/40 px-6 py-10 text-center dark:border-orange-500/25 dark:bg-orange-950/30">
           <div className="relative flex flex-col items-center gap-3">
             <Sparkles className="size-5 text-primary" />
-            <h2 className="text-xl font-bold tracking-tight">Ready to claim your spot?</h2>
+            <h2 className="text-xl font-bold tracking-tight">Ready to get ranked?</h2>
             <p className="max-w-md text-sm text-muted-foreground">
               Pick a category and see what it takes to reach #1.
             </p>
@@ -237,7 +273,9 @@ export default async function AboutPage() {
         <div className="flex flex-col gap-5">
           <div>
             <h2 className="text-xl font-semibold tracking-tight">Founders</h2>
-            <p className="mt-1 text-sm text-muted-foreground">The two people building claimone.lol.</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              ClaimOne is independently built and operated by its two founders.
+            </p>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {FOUNDERS.map((founder) => (

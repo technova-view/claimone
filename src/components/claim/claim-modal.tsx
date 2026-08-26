@@ -205,6 +205,12 @@ function ClaimModalForm({
 
         {error && <p className="text-sm text-destructive">{error}</p>}
 
+        <p className="rounded-lg bg-secondary px-3 py-2 text-xs text-muted-foreground">
+          <span className="font-semibold text-foreground">Important:</span> A ClaimOne ranking provides public
+          leaderboard placement. It does not guarantee clicks, traffic, sales, customers, followers, conversions, or
+          other commercial results.
+        </p>
+
         <Button type="submit" size="lg" disabled={status === "submitting"} className="mt-1">
           {status === "submitting" ? "Preparing checkout…" : "Continue to payment"}
         </Button>
