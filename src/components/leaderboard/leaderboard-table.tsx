@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronLeft, ChevronRight, Zap } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Crown, Zap } from "lucide-react";
 import type { LeaderboardRow } from "@/lib/types/leaderboard";
 import type { BidScope } from "@/lib/types/scope";
 import { displayHostFor, timeAgo } from "@/lib/services/link-display";
@@ -324,7 +324,19 @@ function TopThreeRow({
       >
         #{row.rank}
       </span>
-      <RowAvatar row={row} size="size-14" />
+      <span className="relative shrink-0">
+        <RowAvatar row={row} size="size-14" />
+        <span
+          className={cn(
+            "absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full ring-2 ring-card",
+            row.rank === 1 && "bg-primary text-primary-foreground",
+            row.rank === 2 && "bg-zinc-400 text-white dark:bg-zinc-500",
+            row.rank === 3 && "bg-amber-700 text-white",
+          )}
+        >
+          <Crown className="size-3" />
+        </span>
+      </span>
 
       {/* Title, description, and meta share this column so they line up
           under each other instead of the description/meta spanning the

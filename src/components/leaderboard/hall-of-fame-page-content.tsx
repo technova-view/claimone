@@ -218,7 +218,7 @@ export function HallOfFamePageContent() {
             {currentOverall && <ChampionSpotlight entry={currentOverall} />}
 
             {currentPerCategory.length > 0 && (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-3">
                 {currentPerCategory.map((entry) => (
                   <CategoryWinnerCard key={entry.id} entry={entry} />
                 ))}
