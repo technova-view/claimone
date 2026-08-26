@@ -18,82 +18,118 @@ export default function PricingPage() {
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 px-6 py-14">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Pricing</h1>
+          <p className="mt-2 text-muted-foreground">ClaimOne does not use subscriptions or recurring plans.</p>
           <p className="mt-2 text-muted-foreground">
-            There are no subscription tiers on claimone.lol — you pay a one-time bid amount to claim a ranked spot,
-            and your bid amount is your price. Every listing is a single digital purchase, charged once, delivered
-            instantly.
+            Each listing is purchased as a one-time digital service. You choose the amount you want to contribute to
+            your listing, and that amount determines its position according to the applicable leaderboard&rsquo;s
+            ranking rules.
           </p>
         </div>
 
         <section className="flex flex-col gap-3">
-          <h2 className="text-lg font-semibold">How the price is set</h2>
+          <h2 className="text-lg font-semibold">How pricing works</h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="rounded-2xl border border-border bg-card p-4">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Minimum to list</p>
               <p className="mt-1 font-mono text-2xl font-bold text-primary">{formatAmount(MIN_BID_CENTS)}</p>
-              <p className="mt-1 text-sm text-muted-foreground">The lowest bid that gets a listing onto the board.</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                The minimum amount required to create a listing on a leaderboard.
+              </p>
             </div>
             <div className="rounded-2xl border border-border bg-card p-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Take the #1 spot</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Increase a listing</p>
+              <p className="mt-1 font-mono text-2xl font-bold text-primary">
+                +{formatAmount(MIN_RAISE_OWN_BID_CENTS)} minimum
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                You can increase an existing listing&rsquo;s bid by at least this amount, subject to the current
+                leaderboard rules.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-border bg-card p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Reach #1</p>
               <p className="mt-1 font-mono text-2xl font-bold text-primary">
                 +{formatAmount(MIN_RAISE_TO_TAKE_TOP_CENTS)}
               </p>
-              <p className="mt-1 text-sm text-muted-foreground">Minimum raise above the current top bid, per category.</p>
-            </div>
-            <div className="rounded-2xl border border-border bg-card p-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Raise your own bid</p>
-              <p className="mt-1 font-mono text-2xl font-bold text-primary">
-                +{formatAmount(MIN_RAISE_OWN_BID_CENTS)}
+              <p className="mt-1 text-sm text-muted-foreground">
+                To move a listing into the #1 position, your bid must meet the minimum amount required above the
+                current #1 listing, as shown on the leaderboard.
               </p>
-              <p className="mt-1 text-sm text-muted-foreground">Minimum increase to top up an existing listing.</p>
             </div>
           </div>
           <p className="text-muted-foreground">
-            Above those minimums, there&rsquo;s no price cap and no fixed catalog — you choose exactly how much to
-            bid, and the highest bid in a category holds rank #1. The current going rate for any spot is always
-            visible on the{" "}
-            <Link href="/" className="text-primary hover:underline">
-              leaderboard
-            </Link>{" "}
-            before you pay.
+            There is no fixed catalog of prices. The amount required for a particular position depends on the
+            current bids on that leaderboard and is displayed before you complete your purchase.
           </p>
         </section>
 
         <section className="flex flex-col gap-2">
-          <h2 className="text-lg font-semibold">Three boards, three prices</h2>
+          <h2 className="text-lg font-semibold">Three independent leaderboards</h2>
           <p className="text-muted-foreground">
-            The same listing can be bid on independently across three boards, each with its own going rate:
+            The same listing can have separate bids on each of ClaimOne&rsquo;s three leaderboards:
           </p>
           <ul className="flex list-disc flex-col gap-1.5 pl-5 text-muted-foreground">
             <li>
-              <span className="font-medium text-foreground">All-time</span> — a permanent placement; you hold it
-              until someone outbids you.
+              <span className="font-medium text-foreground">All-time</span> — the listing remains ranked until
+              another eligible listing surpasses its bid.
             </li>
             <li>
-              <span className="font-medium text-foreground">Weekly</span> — resets every week on a fixed UTC
-              schedule; the winner is archived to the Hall of Fame.
+              <span className="font-medium text-foreground">Weekly</span> — rankings reset according to the
+              published weekly UTC schedule. The top-ranked listing at the end of the period may be archived in the
+              Hall of Fame.
             </li>
             <li>
-              <span className="font-medium text-foreground">Daily</span> — resets every day on a fixed UTC schedule,
-              also archived on completion.
+              <span className="font-medium text-foreground">Daily</span> — rankings reset according to the published
+              daily UTC schedule. The top-ranked listing at the end of the period may be archived in the Hall of
+              Fame.
             </li>
           </ul>
+          <p className="text-muted-foreground">Each leaderboard has its own ranking and bid amounts.</p>
         </section>
 
         <section className="flex flex-col gap-2">
-          <h2 className="text-lg font-semibold">Payment &amp; delivery</h2>
+          <h2 className="text-lg font-semibold">What you receive</h2>
           <p className="text-muted-foreground">
-            Checkout is handled by Paddle, our payment provider and Merchant of Record — all major cards are
-            accepted, and Paddle displays the total in your local currency and handles any applicable sales
-            tax/VAT at checkout. Your listing goes live immediately once payment is confirmed; there&rsquo;s nothing
-            further to install, download, or wait for.
+            After successful payment, your listing is activated and displayed on the applicable{" "}
+            <Link href="/" className="text-primary hover:underline">
+              ClaimOne leaderboard
+            </Link>
+            .
+          </p>
+          <p className="text-muted-foreground">Your purchase provides:</p>
+          <ul className="flex list-disc flex-col gap-1.5 pl-5 text-muted-foreground">
+            <li>A public product or X profile listing;</li>
+            <li>Placement within the selected category;</li>
+            <li>A leaderboard position determined by your bid; and</li>
+            <li>
+              Continued placement while your bid remains sufficient for that position, subject to the applicable
+              leaderboard rules.
+            </li>
+          </ul>
+          <p className="text-muted-foreground">
+            ClaimOne does not guarantee a particular number of visitors, clicks, leads, sales, followers, or other
+            commercial results.
+          </p>
+        </section>
+
+        <section className="flex flex-col gap-2">
+          <h2 className="text-lg font-semibold">Payment and delivery</h2>
+          <p className="text-muted-foreground">Checkout is handled by Paddle, our payment provider and Merchant of Record.</p>
+          <p className="text-muted-foreground">
+            Paddle processes the payment and may display the transaction in your local currency and calculate
+            applicable taxes at checkout.
           </p>
           <p className="text-muted-foreground">
-            Because delivery is instant and complete at that point, bids are non-refundable — see our{" "}
+            Your listing becomes active after payment is successfully confirmed. No software download, installation,
+            or physical delivery is required.
+          </p>
+          <p className="text-muted-foreground">
+            Because the digital service may be delivered immediately after successful payment, transactions are
+            generally non-refundable once activated, subject to our{" "}
             <a href="/refund-policy" className="text-primary hover:underline">
               Refund Policy
             </a>{" "}
-            for details.
+            and any refund or consumer rights that cannot legally be excluded.
           </p>
         </section>
       </main>
