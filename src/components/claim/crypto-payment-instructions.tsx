@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, Copy, Loader2, Wallet } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Check, Copy, Loader2, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { connectTronLink, isTronLinkInstalled, payWithTronLink } from "@/lib/services/tronlink-client";
@@ -98,9 +99,20 @@ export function CryptoPaymentInstructions({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-lg bg-secondary px-3 py-2 text-xs text-muted-foreground">
-        <span className="font-semibold text-foreground">Send USDT on the Tron (TRC-20) network only.</span> Any
-        other network or token will not be detected, and cannot be recovered.
+      <div className="flex items-center justify-between gap-3 rounded-lg bg-secondary px-3 py-2 text-xs text-muted-foreground">
+        <p>
+          <span className="font-semibold text-foreground">Send USDT on the Tron (TRC-20) network only.</span> Any
+          other network or token will not be detected, and cannot be recovered.
+        </p>
+        <Link
+          href="/how-to-pay"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group flex shrink-0 items-center gap-1 font-semibold text-primary transition-colors hover:text-primary/80"
+        >
+          Need guideline?
+          <ArrowRight className="size-3 shrink-0 transition-transform group-hover:translate-x-0.5" />
+        </Link>
       </div>
 
       {tronLinkAvailable && walletState !== "submitted" && (
