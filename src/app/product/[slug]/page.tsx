@@ -13,6 +13,12 @@ import { LiveDot } from "@/components/ui/live-dot";
 import { ListingAvatar } from "@/components/ui/listing-avatar";
 import { cn } from "@/lib/utils";
 
+// See src/app/page.tsx for why this is required. Especially critical here:
+// this page's own "confirming your payment…" auto-refresh loop would show
+// the same frozen not-found/pending snapshot forever without it, since the
+// static shell wouldn't ever re-run the bid lookup.
+export const dynamic = "force-dynamic";
+
 function formatAmount(cents: number): string {
   return `$${(cents / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }

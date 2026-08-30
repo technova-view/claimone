@@ -13,6 +13,11 @@ import { getAllTimeVisitorTotal } from "@/lib/services/stats.service";
 import { BidScope } from "@/lib/db/entities/bid.entity";
 import { MIN_BID_CENTS, MIN_RAISE_TO_TAKE_TOP_CENTS } from "@/lib/config/bid-config";
 
+// See src/app/page.tsx for why this is required — reads live leaderboard
+// data with no fetch()/cookies()/searchParams, so without this it gets
+// frozen into build-time HTML instead of reflecting real bids.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "About · claimone.lol",
 };

@@ -6,6 +6,14 @@ import { getLeaderboard } from "@/lib/services/bidding.service";
 import { listCategories } from "@/lib/services/category.service";
 import { BidScope } from "@/lib/db/entities/bid.entity";
 
+// This page has no fetch()/cookies()/searchParams usage, so without this
+// Next.js's static optimization freezes the leaderboard into the build-time
+// HTML and serves that same snapshot to everyone until the next deploy —
+// silently ignoring every bid placed afterward. Confirmed by testing: `next
+// dev` always renders on demand (masking the bug locally), but the
+// production build did not.
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const [allTimeRows, dailyRows, weeklyRows, categoriesEntities] = await Promise.all([
     getLeaderboard({ scope: BidScope.ALL_TIME }),

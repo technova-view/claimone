@@ -4,6 +4,10 @@ import { SiteHeader } from "@/components/site/site-header";
 import { listCategories } from "@/lib/services/category.service";
 import { getCategoryIcon } from "@/lib/config/category-icons";
 
+// See src/app/page.tsx for why this is required — without it, changes made
+// in the admin panel wouldn't show here until the next deploy.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Categories · claimone.lol",
 };

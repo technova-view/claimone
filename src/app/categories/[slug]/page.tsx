@@ -8,6 +8,9 @@ import { getLeaderboard } from "@/lib/services/bidding.service";
 import { getCategoryIcon } from "@/lib/config/category-icons";
 import { BidScope } from "@/lib/db/entities/bid.entity";
 
+// See src/app/page.tsx for why this is required — reads live leaderboard data.
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const category = await getCategoryBySlug(slug);
