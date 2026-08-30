@@ -177,7 +177,7 @@ export function ClaimHero({
   }
 
   return (
-    <section ref={sectionRef} className="scroll-mt-24 flex flex-col gap-4 pt-4">
+    <section ref={sectionRef} className="scroll-mt-24 flex flex-col gap-4 pt-0">
       <div className="rounded-2xl border border-border md:grid md:grid-cols-[40%_60%]">
         {/* Ledger pane */}
         <div className="flex flex-col gap-3 rounded-t-2xl border-b border-border bg-secondary/30 p-5 md:rounded-t-none md:rounded-l-2xl md:border-b-0 md:border-r">
