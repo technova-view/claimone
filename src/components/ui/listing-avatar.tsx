@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { faviconUrlFor, xAvatarUrlFor } from "@/lib/services/link-display";
 
@@ -14,9 +17,10 @@ export function ListingAvatar({
   radius?: string;
   className?: string;
 }) {
+  const [failed, setFailed] = useState(false);
   const src = handle ? xAvatarUrlFor(handle) : url ? faviconUrlFor(url) : null;
 
-  if (!src) {
+  if (!src || failed) {
     return (
       <span
         className={cn(
@@ -40,8 +44,17 @@ export function ListingAvatar({
 
   return (
     <span className={cn("flex shrink-0 overflow-hidden border border-border bg-secondary", size, radius, className)}>
+      {/* Google's favicon service 404s (with a generic icon body browsers
+          won't render) for domains it hasn't indexed a favicon for yet —
+          common for new/small sites, which is most of this site's listings.
+          Falls back to the "?" placeholder above instead of a broken image. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt="" className={cn("h-full w-full object-cover", isFavicon && "scale-150")} />
+      <img
+        src={src}
+        alt=""
+        onError={() => setFailed(true)}
+        className={cn("h-full w-full object-cover", isFavicon && "scale-150")}
+      />
     </span>
   );
 }
