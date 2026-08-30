@@ -406,7 +406,11 @@ export async function checkAndActivateCryptoBid(bid: Bid): Promise<Bid> {
 
   if (!bid.cryptoAmountUsdt) return bid;
   const usedTxHashes = await getUsedCryptoTxHashes();
-  const txHash = await findMatchingCryptoPayment(bid.cryptoAmountUsdt, usedTxHashes);
+  // A few minutes of slack before the bid's own createdAt, purely to absorb
+  // clock skew between our server and Tron block timestamps — the payment
+  // itself can never actually predate the bid that generated its amount.
+  const sinceMs = bid.createdAt.getTime() - 5 * 60_000;
+  const txHash = await findMatchingCryptoPayment(bid.cryptoAmountUsdt, usedTxHashes, sinceMs);
   if (!txHash) return bid;
 
   return activateBidWithCrypto(bid.id, txHash);
