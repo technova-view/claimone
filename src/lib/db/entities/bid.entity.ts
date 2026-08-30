@@ -9,9 +9,9 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 import { Category } from "./category.entity";
-import { BidScope, BidStatus } from "@/lib/types/scope";
+import { BidScope, BidStatus, PaymentProvider } from "@/lib/types/scope";
 
-export { BidScope, BidStatus };
+export { BidScope, BidStatus, PaymentProvider };
 
 @Entity("bids")
 @Index(["scope", "periodKey", "category", "status", "amountCents", "createdAt"])
@@ -52,6 +52,43 @@ export class Bid {
   @Index({ unique: true, where: '"paddleTransactionId" IS NOT NULL' })
   @Column({ type: "varchar", length: 120, nullable: true })
   paddleTransactionId!: string | null;
+
+  // Exact USDT amount (as a decimal string, e.g. "5.0037") the payer must
+  // send — a small per-bid fractional offset on top of the USD amount so
+  // concurrent pending bids can be told apart on a single shared wallet
+  // address with no per-invoice address or memo field to rely on.
+  @Column({ type: "varchar", length: 32, nullable: true })
+  cryptoAmountUsdt!: string | null;
+
+  @Index({ unique: true, where: '"cryptoTxHash" IS NOT NULL' })
+  @Column({ type: "varchar", length: 80, nullable: true })
+  cryptoTxHash!: string | null;
+
+  // NOWPayments is tried first at checkout time (unique deposit address per
+  // payment, provider-hosted chain monitoring); the self-hosted TRC20 flow
+  // above is the fallback when NOWPayments isn't configured or its API call
+  // fails. Defaults to CRYPTO_DIRECT so existing/self-hosted-only rows read
+  // correctly without a backfill.
+  @Column({ type: "enum", enum: PaymentProvider, default: PaymentProvider.CRYPTO_DIRECT })
+  paymentProvider!: PaymentProvider;
+
+  @Index({ unique: true, where: '"nowpaymentsPaymentId" IS NOT NULL' })
+  @Column({ type: "varchar", length: 80, nullable: true })
+  nowpaymentsPaymentId!: string | null;
+
+  // The unique pay-in address NOWPayments generated for this specific
+  // payment — distinct per bid, unlike the shared address the self-hosted
+  // flow uses.
+  @Column({ type: "varchar", length: 128, nullable: true })
+  nowpaymentsPayAddress!: string | null;
+
+  @Column({ type: "varchar", length: 32, nullable: true })
+  nowpaymentsPayAmount!: string | null;
+
+  // e.g. "usdttrc20" — kept per-bid rather than assumed, in case the
+  // account-level default currency changes later.
+  @Column({ type: "varchar", length: 32, nullable: true })
+  nowpaymentsPayCurrency!: string | null;
 
   // UTC date (daily) or ISO week (weekly) this bid belongs to; null for all_time.
   @Column({ type: "varchar", length: 20, nullable: true })

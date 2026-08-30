@@ -229,7 +229,9 @@ export default function RulesPage() {
         <section className="flex flex-col gap-2">
           <h2 className="text-lg font-semibold">Payments</h2>
           <p className="text-muted-foreground">
-            Payments are processed through our payment provider and Merchant of Record, Paddle.
+            Payments are made directly in cryptocurrency (USDT), either sent directly to our wallet address or
+            processed through NOWPayments, a third-party crypto payment processor. ClaimOne is the seller of
+            record for your listing.
           </p>
           <p className="text-muted-foreground">The final amount charged is displayed during checkout before you complete the purchase.</p>
           <p className="text-muted-foreground">

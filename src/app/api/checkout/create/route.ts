@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { BidScope } from "@/lib/db/entities/bid.entity";
-import {
-  BidValidationError,
-  createPendingBid,
-  setPaddleTransactionId,
-  validateAndPriceBid,
-} from "@/lib/services/bidding.service";
-import { createBidCheckoutTransaction } from "@/lib/paddle/server";
+import { BidScope, PaymentProvider } from "@/lib/db/entities/bid.entity";
+import { BidValidationError, createPendingBid, validateAndPriceBid } from "@/lib/services/bidding.service";
+import { env } from "@/lib/config/env";
 
 interface CreateCheckoutBody {
   scope: BidScope;
@@ -46,16 +41,20 @@ export async function POST(request: NextRequest) {
       amountCents: body.amountCents,
     });
 
-    const label = bid.url ?? `@${bid.handle}`;
-    const transaction = await createBidCheckoutTransaction({
-      bidId: bid.id,
-      title: label,
-      amountCents: body.amountCents,
-    });
+    const payment =
+      bid.paymentProvider === PaymentProvider.NOWPAYMENTS
+        ? {
+            payAmount: bid.nowpaymentsPayAmount!,
+            payAddress: bid.nowpaymentsPayAddress!,
+            payCurrencyLabel: "USDT (TRC-20)",
+          }
+        : {
+            payAmount: bid.cryptoAmountUsdt!,
+            payAddress: env.cryptoWalletAddress,
+            payCurrencyLabel: "USDT (TRC-20)",
+          };
 
-    await setPaddleTransactionId(bid.id, transaction.id);
-
-    return NextResponse.json({ bidId: bid.id, transactionId: transaction.id });
+    return NextResponse.json({ bidId: bid.id, ...payment });
   } catch (error) {
     if (error instanceof BidValidationError) {
       return NextResponse.json({ error: error.message }, { status: 400 });

@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { BidScope } from "@/lib/types/scope";
 import { submitBidCheckout } from "@/lib/services/checkout-client";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
+import { CryptoPaymentInstructions } from "@/components/claim/crypto-payment-instructions";
 import { cn } from "@/lib/utils";
 
 export interface ClaimTarget {
@@ -48,6 +50,7 @@ function ClaimModalForm({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const router = useRouter();
   const [categories, setCategories] = useState<{ slug: string; name: string }[]>([]);
   const scope = target.scope;
   const [categorySlug, setCategorySlug] = useState(target.categorySlug);
@@ -56,6 +59,11 @@ function ClaimModalForm({
   const [amount, setAmount] = useState((target.amountCents / 100).toString());
   const [status, setStatus] = useState<"idle" | "submitting" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
+  const [payment, setPayment] = useState<{
+    bidId: string;
+    payAmount: string;
+    payAddress: string;
+  } | null>(null);
 
   useEffect(() => {
     if (!open || categories.length > 0) return;
@@ -96,7 +104,30 @@ function ClaimModalForm({
       setStatus("idle");
       return;
     }
+    setStatus("idle");
+    setPayment({
+      bidId: result.bidId,
+      payAmount: result.payAmount,
+      payAddress: result.payAddress,
+    });
+  }
+
+  function handleConfirmed(slug: string | null) {
     onOpenChange(false);
+    if (slug) router.push(`/product/${slug}`);
+  }
+
+  if (payment) {
+    return (
+      <Modal open={open} onOpenChange={onOpenChange} title="Send payment">
+        <CryptoPaymentInstructions
+          bidId={payment.bidId}
+          payAmount={payment.payAmount}
+          payAddress={payment.payAddress}
+          onConfirmed={handleConfirmed}
+        />
+      </Modal>
+    );
   }
 
   return (

@@ -67,8 +67,8 @@ export default function RefundPolicyPage() {
         <section className="flex flex-col gap-2">
           <h2 className="text-lg font-semibold">4. Incorrect or Unauthorized Transactions</h2>
           <p className="text-muted-foreground">
-            If you believe a transaction was made without your authorization, contact us and/or Paddle as soon as
-            possible.
+            If you believe a transaction was made without your authorization, contact us (and NOWPayments, where
+            applicable) as soon as possible.
           </p>
           <p className="text-muted-foreground">We may request transaction details to investigate the matter.</p>
           <p className="text-muted-foreground">Fraudulent or abusive refund requests may be declined where permitted by law.</p>
@@ -87,42 +87,37 @@ export default function RefundPolicyPage() {
         </section>
 
         <section className="flex flex-col gap-2">
-          <h2 className="text-lg font-semibold">6. Paddle</h2>
+          <h2 className="text-lg font-semibold">6. Cryptocurrency Payments</h2>
           <p className="text-muted-foreground">
-            Payments are processed by{" "}
+            Payments are made directly in cryptocurrency (USDT), either sent directly to our wallet address or
+            processed through{" "}
             <a
-              href="https://www.paddle.com"
+              href="https://nowpayments.io"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline"
             >
-              Paddle
+              NOWPayments
             </a>
-            , our payment provider and Merchant of Record.
+            , a third-party crypto payment processor. ClaimOne, not NOWPayments, is the seller of record for your
+            listing.
           </p>
           <p className="text-muted-foreground">
-            Paddle maintains its own buyer terms and refund procedures. Depending on the transaction and your
-            location, Paddle may have additional refund or cancellation requirements or statutory obligations.
-          </p>
-          <p className="text-muted-foreground">
-            Where Paddle is the appropriate party to process a refund, you may use the refund or support process
-            provided in your Paddle transaction receipt.
-          </p>
-          <p className="text-muted-foreground">
-            Paddle&rsquo;s current refund policy states that applicable statutory rights are preserved and that
-            refunds may also be available in cases such as material product or technical defects.
+            Cryptocurrency transactions are generally irreversible once confirmed on the blockchain. There is no
+            card network or bank to reverse a payment through — any refund we approve under this policy is issued
+            by ClaimOne directly, at our discretion, and may take the form of a return cryptocurrency transfer.
           </p>
         </section>
 
         <section className="flex flex-col gap-2">
-          <h2 className="text-lg font-semibold">7. Chargebacks and Payment Disputes</h2>
+          <h2 className="text-lg font-semibold">7. Payment Disputes</h2>
           <p className="text-muted-foreground">
-            If you have a problem with a transaction, please contact ClaimOne or Paddle before initiating a
-            chargeback where possible so that we can investigate and resolve the issue.
+            If you have a problem with a transaction, please contact ClaimOne before sending any funds to a third
+            party in an attempt to reverse it, so that we can investigate and resolve the issue directly.
           </p>
           <p className="text-muted-foreground">
-            Nothing in this policy prevents you from exercising lawful rights available through your card issuer,
-            payment provider, or applicable consumer-protection laws.
+            Nothing in this policy prevents you from exercising lawful rights available under applicable
+            consumer-protection laws.
           </p>
         </section>
 

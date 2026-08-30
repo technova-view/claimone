@@ -44,15 +44,18 @@ export default function PrivacyPage() {
         <section className="flex flex-col gap-2">
           <h2 className="text-lg font-semibold">2. Payment Information</h2>
           <p className="text-muted-foreground">
-            Payments are processed by Paddle, which acts as our payment provider and Merchant of Record.
+            Payments are made directly in cryptocurrency (USDT). Depending on how you choose to pay, this may be
+            processed through NOWPayments, a third-party crypto payment processor, or sent directly to our wallet
+            address. ClaimOne is the seller of your listing; NOWPayments (where used) only processes the payment
+            itself and does not act as Merchant of Record.
           </p>
           <p className="text-muted-foreground">
             ClaimOne does not store your full credit-card number or other complete payment credentials on our own
             systems.
           </p>
           <p className="text-muted-foreground">
-            Paddle may collect and process payment, billing, tax, fraud-prevention, and transaction information
-            according to its own policies.
+            NOWPayments may collect and process payment and transaction information according to its own policies
+            when used.
           </p>
           <p className="text-muted-foreground">
             We may receive limited transaction information, such as a transaction identifier and payment status,
@@ -123,8 +126,8 @@ export default function PrivacyPage() {
           <p className="text-muted-foreground">ClaimOne currently uses these third-party providers to operate the service:</p>
           <ul className="flex list-disc flex-col gap-1.5 pl-5 text-muted-foreground">
             <li>
-              <span className="font-medium text-foreground">Paddle</span> — payment processing, billing, tax, and
-              fraud prevention for transactions;
+              <span className="font-medium text-foreground">NOWPayments</span> — payment processing for
+              transactions paid via their service;
             </li>
             <li>
               <span className="font-medium text-foreground">Vercel</span> — application hosting and infrastructure;

@@ -1,7 +1,5 @@
 "use client";
 
-import { openPaddleCheckout } from "@/lib/paddle/client";
-import { slugForListing } from "@/lib/services/product-slug";
 import type { BidScope } from "@/lib/types/scope";
 
 export interface SubmitBidInput {
@@ -12,11 +10,14 @@ export interface SubmitBidInput {
   handle?: string;
 }
 
-export type SubmitBidResult = { ok: true } | { ok: false; error: string };
+export type SubmitBidResult =
+  | { ok: true; bidId: string; payAmount: string; payAddress: string; payCurrencyLabel: string }
+  | { ok: false; error: string };
 
-// Shared by any form that collects a scope/category/amount/link and wants to
-// go straight to Paddle checkout — posts the bid, then opens the checkout
-// overlay with the resulting transaction.
+// Shared by any form that collects a scope/category/amount/link — posts the
+// bid and hands back the payment details (exact amount + address, whichever
+// provider generated them) for the caller to display, rather than
+// redirecting anywhere.
 export async function submitBidCheckout(input: SubmitBidInput): Promise<SubmitBidResult> {
   try {
     const res = await fetch("/api/checkout/create", {
@@ -28,10 +29,13 @@ export async function submitBidCheckout(input: SubmitBidInput): Promise<SubmitBi
     if (!res.ok) {
       return { ok: false, error: data.error ?? "Something went wrong." };
     }
-    const slug = slugForListing({ url: input.url ?? null, handle: input.handle ?? null });
-    const successUrl = slug ? `${window.location.origin}/product/${slug}` : undefined;
-    await openPaddleCheckout(data.transactionId, successUrl);
-    return { ok: true };
+    return {
+      ok: true,
+      bidId: data.bidId,
+      payAmount: data.payAmount,
+      payAddress: data.payAddress,
+      payCurrencyLabel: data.payCurrencyLabel,
+    };
   } catch {
     return { ok: false, error: "Something went wrong. Please try again." };
   }

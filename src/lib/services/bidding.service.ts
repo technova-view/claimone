@@ -1,12 +1,15 @@
+import { randomUUID } from "crypto";
 import type { DataSource, EntityManager } from "typeorm";
 import { getDataSource } from "@/lib/db/data-source";
-import { Bid, BidScope, BidStatus } from "@/lib/db/entities/bid.entity";
+import { Bid, BidScope, BidStatus, PaymentProvider } from "@/lib/db/entities/bid.entity";
 import { getCategoryBySlug } from "@/lib/services/category.service";
 import { getDailyKey, getWeeklyKey } from "@/lib/services/period";
 import { getClickBoostEnabled, getFakeItemsEnabled } from "@/lib/services/stats.service";
 import { fetchUrlDescription } from "@/lib/services/link-metadata.service";
 import { normalizeUrl } from "@/lib/services/link-display";
 import { slugForListing } from "@/lib/services/product-slug";
+import { computeCryptoAmountUsdt, findMatchingCryptoPayment } from "@/lib/services/crypto-payment.service";
+import { createNowPaymentsInvoice, getNowPaymentsSdk } from "@/lib/services/nowpayments.service";
 import {
   MAX_BID_CENTS,
   MIN_BID_CENTS,
@@ -192,9 +195,36 @@ export async function createPendingBid(input: CreatePendingBidInput): Promise<Bi
 
   const description = url ? await fetchUrlDescription(url) : null;
 
+  // Id generated up front (rather than left to the DB default) so both the
+  // NOWPayments order_id and the self-hosted fallback's per-bid crypto
+  // amount can be derived from it before the first insert.
+  const id = randomUUID();
+
+  // NOWPayments is the primary path: a unique deposit address per payment,
+  // provider-hosted chain monitoring, and support for more networks than we
+  // want to hand-build ourselves. Any failure (not configured, network
+  // error, API error) falls straight back to the self-hosted TRC-20 flow —
+  // "primary provider is down" should never be a reason checkout breaks.
+  let paymentProvider = PaymentProvider.CRYPTO_DIRECT;
+  let nowpaymentsPaymentId: string | null = null;
+  let nowpaymentsPayAddress: string | null = null;
+  let nowpaymentsPayAmount: string | null = null;
+  let nowpaymentsPayCurrency: string | null = null;
+  try {
+    const invoice = await createNowPaymentsInvoice(id, input.amountCents);
+    paymentProvider = PaymentProvider.NOWPAYMENTS;
+    nowpaymentsPaymentId = invoice.paymentId;
+    nowpaymentsPayAddress = invoice.payAddress;
+    nowpaymentsPayAmount = invoice.payAmount;
+    nowpaymentsPayCurrency = invoice.payCurrency;
+  } catch (error) {
+    console.error("NOWPayments invoice creation failed, falling back to self-hosted crypto flow", error);
+  }
+
   const ds = await getDataSource();
   const repo = ds.getRepository(Bid);
   const bid = repo.create({
+    id,
     scope: input.scope,
     status: BidStatus.PENDING_PAYMENT,
     categoryId: category.id,
@@ -204,6 +234,13 @@ export async function createPendingBid(input: CreatePendingBidInput): Promise<Bi
     amountCents: input.amountCents,
     periodKey: currentPeriodKeyFor(input.scope),
     paddleTransactionId: null,
+    paymentProvider,
+    cryptoAmountUsdt: paymentProvider === PaymentProvider.CRYPTO_DIRECT ? computeCryptoAmountUsdt(id, input.amountCents) : null,
+    cryptoTxHash: null,
+    nowpaymentsPaymentId,
+    nowpaymentsPayAddress,
+    nowpaymentsPayAmount,
+    nowpaymentsPayCurrency,
     activatedAt: null,
   });
   return repo.save(bid);
@@ -274,11 +311,13 @@ export async function incrementClickCount(bidId: string): Promise<void> {
   await ds.getRepository(Bid).increment({ id: bidId }, "clickCount", 1);
 }
 
-// Only the verified Paddle webhook handler may call this. Idempotent: safe
-// to call more than once for the same bid (Paddle may retry webhooks), and
-// deliberately does not re-check ranking rules — the payment already
-// succeeded, so the bid activates at whatever rank its amount now lands on.
-export async function activateBid(bidId: string, paddleTransactionId: string): Promise<Bid> {
+// Shared by every activation path: flips PENDING_PAYMENT -> ACTIVE and dedupes
+// against any other active listing for the same URL/handle. Idempotent — a
+// bid that's already ACTIVE is returned as-is, since a webhook or the crypto
+// poller can both observe the same payment more than once. Deliberately does
+// not re-check ranking rules; the payment already happened, so the bid
+// activates at whatever rank its amount now lands on.
+async function activateBidCore(bidId: string, applyPaymentRef: (bid: Bid) => void): Promise<Bid> {
   const ds = await getDataSource();
   return ds.transaction(async (manager) => {
     const repo = manager.getRepository(Bid);
@@ -291,7 +330,7 @@ export async function activateBid(bidId: string, paddleTransactionId: string): P
     }
     bid.status = BidStatus.ACTIVE;
     bid.activatedAt = new Date();
-    bid.paddleTransactionId = paddleTransactionId;
+    applyPaymentRef(bid);
     const saved = await repo.save(bid);
 
     await dedupeActiveListing(manager, {
@@ -304,6 +343,88 @@ export async function activateBid(bidId: string, paddleTransactionId: string): P
 
     return saved;
   });
+}
+
+// Only the verified Paddle webhook handler may call this.
+export async function activateBid(bidId: string, paddleTransactionId: string): Promise<Bid> {
+  return activateBidCore(bidId, (bid) => {
+    bid.paddleTransactionId = paddleTransactionId;
+  });
+}
+
+// Called by the on-demand payment-status check and the crypto-sweep cron
+// once a matching on-chain USDT transfer is found for this bid.
+export async function activateBidWithCrypto(bidId: string, cryptoTxHash: string): Promise<Bid> {
+  return activateBidCore(bidId, (bid) => {
+    bid.cryptoTxHash = cryptoTxHash;
+  });
+}
+
+// Called by the verified NOWPayments webhook, and by the sweep's own
+// fallback poll against NOWPayments' API for bids whose webhook never
+// arrived.
+export async function activateBidWithNowPayments(bidId: string, nowpaymentsPaymentId: string): Promise<Bid> {
+  return activateBidCore(bidId, (bid) => {
+    bid.nowpaymentsPaymentId = nowpaymentsPaymentId;
+  });
+}
+
+// Every bid a real transfer has already been credited to, across every
+// status — used to stop the same on-chain transaction from being matched to
+// a second bid (e.g. if a stale amount collision briefly lines up).
+export async function getUsedCryptoTxHashes(): Promise<Set<string>> {
+  const ds = await getDataSource();
+  const rows = await ds
+    .getRepository(Bid)
+    .createQueryBuilder("bid")
+    .select("bid.cryptoTxHash", "cryptoTxHash")
+    .where("bid.cryptoTxHash IS NOT NULL")
+    .getRawMany<{ cryptoTxHash: string }>();
+  return new Set(rows.map((r) => r.cryptoTxHash));
+}
+
+// Looks for payment confirmation for this specific bid and activates it if
+// found — branches on which provider the bid was created against. Used by
+// both the buyer-facing "check my payment" poll and the cron sweep; cheap
+// and safe to call repeatedly on a bid that's already active (returns it
+// unchanged without hitting either provider).
+//
+// For NOWPAYMENTS bids this is a *fallback* check, not the primary path —
+// the webhook is the source of truth and normally activates the bid first;
+// this only matters when a webhook delivery is delayed or lost.
+export async function checkAndActivateCryptoBid(bid: Bid): Promise<Bid> {
+  if (bid.status === BidStatus.ACTIVE) return bid;
+
+  if (bid.paymentProvider === PaymentProvider.NOWPAYMENTS) {
+    if (!bid.nowpaymentsPaymentId) return bid;
+    const sdk = getNowPaymentsSdk();
+    if (!sdk) return bid;
+    const payment = await sdk.getPaymentStatus(bid.nowpaymentsPaymentId);
+    if (payment.status !== "paid") return bid;
+    return activateBidWithNowPayments(bid.id, bid.nowpaymentsPaymentId);
+  }
+
+  if (!bid.cryptoAmountUsdt) return bid;
+  const usedTxHashes = await getUsedCryptoTxHashes();
+  const txHash = await findMatchingCryptoPayment(bid.cryptoAmountUsdt, usedTxHashes);
+  if (!txHash) return bid;
+
+  return activateBidWithCrypto(bid.id, txHash);
+}
+
+// Bids still waiting on payment, oldest first — swept by the cron as a
+// safety net for buyers whose confirmation never made it back on its own
+// (closed tab before the poll caught it, a lost NOWPayments webhook, etc).
+export async function getPendingCryptoBids(): Promise<Bid[]> {
+  const ds = await getDataSource();
+  return ds
+    .getRepository(Bid)
+    .createQueryBuilder("bid")
+    .where("bid.status = :status", { status: BidStatus.PENDING_PAYMENT })
+    .andWhere("(bid.cryptoAmountUsdt IS NOT NULL OR bid.nowpaymentsPaymentId IS NOT NULL)")
+    .orderBy("bid.createdAt", "ASC")
+    .take(200)
+    .getMany();
 }
 
 export async function getBidById(bidId: string): Promise<Bid | null> {

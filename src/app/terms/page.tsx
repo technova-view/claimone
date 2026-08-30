@@ -129,16 +129,18 @@ export default function TermsPage() {
         <section className="flex flex-col gap-2">
           <h2 className="text-lg font-semibold">5. Payment</h2>
           <p className="text-muted-foreground">
-            Payments are processed through our payment provider and Merchant of Record,{" "}
+            Payments are made directly in cryptocurrency (USDT). Depending on how you choose to pay, this is
+            processed either through{" "}
             <a
-              href="https://www.paddle.com"
+              href="https://nowpayments.io"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline"
             >
-              Paddle
+              NOWPayments
             </a>
-            .
+            , a third-party crypto payment processor, or sent directly to our wallet address. ClaimOne is the
+            seller of record for your listing.
           </p>
           <p className="text-muted-foreground">Your listing becomes active after successful payment confirmation.</p>
           <p className="text-muted-foreground">
@@ -146,8 +148,9 @@ export default function TermsPage() {
             provide is accurate.
           </p>
           <p className="text-muted-foreground">
-            Paddle may process payment, tax, invoicing, fraud prevention, refunds, and related transaction functions
-            under its own terms and policies.
+            Where used, NOWPayments may process payment and related transaction functions under its own terms and
+            policies. Because payments are made in cryptocurrency, transactions are generally irreversible once
+            confirmed on the blockchain.
           </p>
         </section>
 
@@ -211,12 +214,12 @@ export default function TermsPage() {
             and applicable law.
           </p>
           <p className="text-muted-foreground">
-            Because leaderboard placement may become active immediately after successful payment, transactions may
-            generally be non-refundable once delivered, subject to applicable statutory rights and any refund rights
-            provided by Paddle.
+            Because leaderboard placement may become active immediately after successful payment, and because
+            cryptocurrency payments are generally irreversible once confirmed, transactions are generally
+            non-refundable once delivered, subject to applicable statutory rights.
           </p>
           <p className="text-muted-foreground">
-            You should contact us or Paddle before initiating a payment dispute or chargeback where possible.
+            You should contact us before initiating a payment dispute where possible.
           </p>
         </section>
 

@@ -14,3 +14,9 @@ export enum BidStatus {
   ACTIVE = "active",
   ARCHIVED = "archived",
 }
+
+export enum PaymentProvider {
+  PADDLE = "paddle",
+  CRYPTO_DIRECT = "crypto_direct",
+  NOWPAYMENTS = "nowpayments",
+}

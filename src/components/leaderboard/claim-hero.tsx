@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowUp, AtSign, Globe2, Sparkles, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CategorySelect } from "@/components/category/category-select";
 import { submitBidCheckout } from "@/lib/services/checkout-client";
+import { CryptoPaymentInstructions } from "@/components/claim/crypto-payment-instructions";
 import { useAppModals } from "@/components/app-modals/app-modals-provider";
 import { BidScope } from "@/lib/types/scope";
 import { MIN_BID_CENTS, MIN_RAISE_TO_TAKE_TOP_CENTS } from "@/lib/config/bid-config";
@@ -82,6 +84,7 @@ export function ClaimHero({
   rowsByScope: Record<BidScope, LeaderboardRow[]>;
   categories: { slug: string; name: string }[];
 }) {
+  const router = useRouter();
   const { claimHeroRequest } = useAppModals();
   const sectionRef = useRef<HTMLElement>(null);
   const [scope, setScope] = useState<BidScope>(BidScope.ALL_TIME);
@@ -90,6 +93,11 @@ export function ClaimHero({
   const [amountCents, setAmountCents] = useState(() => minPriceFor(rowsByScope[BidScope.ALL_TIME], ""));
   const [status, setStatus] = useState<"idle" | "submitting">("idle");
   const [error, setError] = useState<string | null>(null);
+  const [payment, setPayment] = useState<{
+    bidId: string;
+    payAmount: string;
+    payAddress: string;
+  } | null>(null);
 
   // A "Claim now" button elsewhere on the page (e.g. a leaderboard row) can
   // ask this hero to prefill itself for outbidding that row and scroll into
@@ -157,6 +165,15 @@ export function ClaimHero({
       return;
     }
     setStatus("idle");
+    setPayment({
+      bidId: result.bidId,
+      payAmount: result.payAmount,
+      payAddress: result.payAddress,
+    });
+  }
+
+  function handleConfirmed(slug: string | null) {
+    if (slug) router.push(`/product/${slug}`);
   }
 
   return (
@@ -235,6 +252,16 @@ export function ClaimHero({
         </div>
 
         {/* Form pane */}
+        {payment ? (
+          <div className="flex flex-col justify-center gap-4 rounded-b-2xl p-5 md:rounded-b-none md:rounded-r-2xl">
+            <CryptoPaymentInstructions
+              bidId={payment.bidId}
+              payAmount={payment.payAmount}
+              payAddress={payment.payAddress}
+              onConfirmed={handleConfirmed}
+            />
+          </div>
+        ) : (
         <form
           onSubmit={handleSubmit}
           className="flex flex-col justify-center gap-4 rounded-b-2xl p-5 md:rounded-b-none md:rounded-r-2xl"
@@ -325,6 +352,7 @@ export function ClaimHero({
           </Button>
           <p className="text-xs text-muted-foreground">Already on the list? Enter the same URL or @handle and up your bid.</p>
         </form>
+        )}
       </div>
     </section>
   );
