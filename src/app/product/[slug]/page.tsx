@@ -7,7 +7,8 @@ import { ProductPageActions } from "@/components/product/product-page-actions";
 import { getLeaderboard, hasPendingBidMatchingSlug } from "@/lib/services/bidding.service";
 import { BidScope } from "@/lib/db/entities/bid.entity";
 import { slugForListing } from "@/lib/services/product-slug";
-import { displayHostFor, timeAgo } from "@/lib/services/link-display";
+import { displayHostFor, faviconUrlFor, timeAgo } from "@/lib/services/link-display";
+import { DEFAULT_OG_IMAGE, SITE_NAME } from "@/lib/config/site-metadata";
 import { getCategoryIcon } from "@/lib/config/category-icons";
 import { LiveDot } from "@/components/ui/live-dot";
 import { ListingAvatar } from "@/components/ui/listing-avatar";
@@ -68,7 +69,27 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!data) return { title: "Not found · claimone.lol" };
   const { row } = data;
   const label = row.handle ? `@${row.handle}` : row.title ? row.title : row.url ? displayHostFor(row.url) : slug;
-  return { title: `${label} · claimone.lol` };
+  const title = `${label} · claimone.lol`;
+  const description = row.description ?? `Ranked #${row.rank} in ${row.categoryName} on claimone.lol.`;
+  const image = (row.url ? faviconUrlFor(row.url) : null) ?? DEFAULT_OG_IMAGE;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      siteName: SITE_NAME,
+      images: [image],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [image],
+    },
+  };
 }
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {

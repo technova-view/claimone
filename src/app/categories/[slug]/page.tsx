@@ -7,6 +7,7 @@ import { getCategoryBySlug } from "@/lib/services/category.service";
 import { getLeaderboard } from "@/lib/services/bidding.service";
 import { getCategoryIcon } from "@/lib/config/category-icons";
 import { BidScope } from "@/lib/db/entities/bid.entity";
+import { DEFAULT_OG_IMAGE, SITE_NAME } from "@/lib/config/site-metadata";
 
 // See src/app/page.tsx for why this is required — reads live leaderboard data.
 export const dynamic = "force-dynamic";
@@ -14,7 +15,17 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const category = await getCategoryBySlug(slug);
-  return { title: category ? `${category.name} · claimone.lol` : "Category not found · claimone.lol" };
+  if (!category) return { title: "Category not found · claimone.lol" };
+
+  const title = `${category.name} · claimone.lol`;
+  const description = `See who's ranked #1 in ${category.name} on claimone.lol — rankings determined by bid.`;
+
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: "website", siteName: SITE_NAME, images: [DEFAULT_OG_IMAGE] },
+    twitter: { card: "summary_large_image", title, description, images: [DEFAULT_OG_IMAGE] },
+  };
 }
 
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
