@@ -35,18 +35,14 @@ export class StatsDaily {
 }
 
 // Singleton row (id fixed to 1) holding site-wide admin-controlled settings:
-// the range the public "online now" counter randomizes within, and whether
-// admin-injected fake leaderboard entries are currently shown publicly.
+// whether admin-injected fake leaderboard entries are currently shown
+// publicly. The "online now" counter used to randomize within an
+// admin-set range stored here too; it's now backed by real presence
+// tracking (see presence.service.ts) instead.
 @Entity("stats_settings")
 export class StatsSettings {
   @PrimaryColumn({ type: "int", default: 1 })
   id!: number;
-
-  @Column({ type: "int", default: 400 })
-  onlineMin!: number;
-
-  @Column({ type: "int", default: 650 })
-  onlineMax!: number;
 
   @Column({ type: "boolean", default: true })
   fakeItemsEnabled!: boolean;

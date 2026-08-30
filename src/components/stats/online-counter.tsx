@@ -2,22 +2,29 @@
 
 import { useEffect, useState } from "react";
 
-function randomInRange(min: number, max: number): number {
-  return Math.round(min + Math.random() * (max - min));
-}
+const POLL_INTERVAL_MS = 8000;
 
-export function OnlineCounter({ min, max }: { min: number; max: number }) {
-  const [value, setValue] = useState<number | null>(null);
+// `initialCount` is server-rendered (see status-bar.tsx) so the number is
+// correct on first paint with no flash of "—"; this effect then keeps it
+// live by polling the real presence count (src/app/api/presence/count).
+export function OnlineCounter({ initialCount }: { initialCount: number }) {
+  const [value, setValue] = useState(initialCount);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- avoids an SSR/client mismatch on the first random value
-    setValue(randomInRange(min, max));
-    const interval = setInterval(
-      () => setValue(randomInRange(min, max)),
-      5000 + Math.random() * 3000,
-    );
-    return () => clearInterval(interval);
-  }, [min, max]);
+    let cancelled = false;
+    const interval = setInterval(() => {
+      fetch("/api/presence/count")
+        .then((res) => res.json())
+        .then((data) => {
+          if (!cancelled && typeof data.count === "number") setValue(data.count);
+        })
+        .catch(() => {});
+    }, POLL_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
 
-  return <span>{value === null ? "—" : value.toLocaleString()}</span>;
+  return <span>{value.toLocaleString()}</span>;
 }

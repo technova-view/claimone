@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { ArrowRight, BarChart3, Eye } from "lucide-react";
-import { getAllTimeVisitorTotal, getOnlineRange } from "@/lib/services/stats.service";
+import { getAllTimeVisitorTotal } from "@/lib/services/stats.service";
+import { getOnlineCount } from "@/lib/services/presence.service";
 import { OnlineCounter } from "@/components/stats/online-counter";
 import { LiveDot } from "@/components/ui/live-dot";
 
 export async function StatusBar() {
-  const [range, visitorTotal] = await Promise.all([getOnlineRange(), getAllTimeVisitorTotal()]);
+  const [onlineCount, visitorTotal] = await Promise.all([getOnlineCount(), getAllTimeVisitorTotal()]);
 
   return (
     <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 rounded-full border border-primary/20 bg-card/80 px-5 py-2 text-xs shadow-xs backdrop-blur supports-backdrop-filter:bg-card/60">
@@ -13,7 +14,7 @@ export async function StatusBar() {
       <div className="flex items-center gap-2">
         <LiveDot />
         <span className="font-semibold text-green-600">
-          <OnlineCounter min={range.onlineMin} max={range.onlineMax} />
+          <OnlineCounter initialCount={onlineCount} />
         </span>
         <span className="text-muted-foreground">Online</span>
       </div>

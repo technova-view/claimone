@@ -55,11 +55,6 @@ export default function AdminStatsPage() {
   const [randomMin, setRandomMin] = useState(2000);
   const [randomMax, setRandomMax] = useState(6000);
 
-  const [onlineMin, setOnlineMin] = useState<number | "">("");
-  const [onlineMax, setOnlineMax] = useState<number | "">("");
-  const [rangeLoading, setRangeLoading] = useState(true);
-  const [rangeSaving, setRangeSaving] = useState(false);
-
   useEffect(() => {
     let cancelled = false;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- refetch on date change is the effect's whole job
@@ -80,23 +75,6 @@ export default function AdminStatsPage() {
     };
   }, [dateKey]);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/admin/stats/settings")
-      .then((res) => res.json())
-      .then((data) => {
-        if (cancelled) return;
-        setOnlineMin(data.onlineMin ?? "");
-        setOnlineMax(data.onlineMax ?? "");
-      })
-      .finally(() => {
-        if (!cancelled) setRangeLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   async function handleSaveDay() {
     setDaySaving(true);
     try {
@@ -112,20 +90,6 @@ export default function AdminStatsPage() {
       });
     } finally {
       setDaySaving(false);
-    }
-  }
-
-  async function handleSaveRange() {
-    if (onlineMin === "" || onlineMax === "") return;
-    setRangeSaving(true);
-    try {
-      await fetch("/api/admin/stats/settings", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ onlineMin, onlineMax }),
-      });
-    } finally {
-      setRangeSaving(false);
     }
   }
 
@@ -263,38 +227,6 @@ export default function AdminStatsPage() {
 
           <Button type="button" onClick={handleSaveDay} disabled={daySaving} className="mt-6 h-10 px-6">
             {daySaving ? "Saving…" : "Save day"}
-          </Button>
-        </section>
-
-        <section className={cn("rounded-3xl border border-border bg-card p-6", rangeLoading && "opacity-50")}>
-          <h2 className="text-lg font-semibold">Online now range</h2>
-          <p className="mb-4 text-sm text-muted-foreground">
-            The public page shows a random number in this range, re-rolled every few seconds.
-          </p>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:max-w-md">
-            <label className="flex flex-col gap-1.5 text-sm font-medium">
-              Min
-              <input
-                type="number"
-                min={0}
-                value={onlineMin}
-                onChange={(e) => setOnlineMin(e.target.value === "" ? "" : Number(e.target.value))}
-                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-              />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm font-medium">
-              Max
-              <input
-                type="number"
-                min={0}
-                value={onlineMax}
-                onChange={(e) => setOnlineMax(e.target.value === "" ? "" : Number(e.target.value))}
-                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-              />
-            </label>
-          </div>
-          <Button type="button" onClick={handleSaveRange} disabled={rangeSaving} className="mt-6 h-10 px-6">
-            {rangeSaving ? "Saving…" : "Save range"}
           </Button>
         </section>
       </div>

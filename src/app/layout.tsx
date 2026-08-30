@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { AppModalsProvider } from "@/components/app-modals/app-modals-provider";
 import { SiteFooter } from "@/components/site/site-footer";
+import { PresenceHeartbeat } from "@/components/stats/presence-heartbeat";
 import { env } from "@/lib/config/env";
 import { DEFAULT_OG_IMAGE, SITE_NAME } from "@/lib/config/site-metadata";
 
@@ -51,6 +52,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AppModalsProvider>
+            <PresenceHeartbeat />
             {children}
             <SiteFooter />
           </AppModalsProvider>

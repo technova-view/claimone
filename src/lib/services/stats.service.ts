@@ -83,32 +83,6 @@ export async function getAllTimeVisitorTotal(): Promise<number> {
   return Number(row?.total ?? 0);
 }
 
-export interface OnlineRange {
-  onlineMin: number;
-  onlineMax: number;
-}
-
-export async function getOnlineRange(): Promise<OnlineRange> {
-  const ds = await getDataSource();
-  const repo = ds.getRepository(StatsSettings);
-  const existing = await repo.findOne({ where: { id: 1 } });
-  if (existing) return { onlineMin: existing.onlineMin, onlineMax: existing.onlineMax };
-  return { onlineMin: 400, onlineMax: 650 };
-}
-
-export async function saveOnlineRange(range: OnlineRange): Promise<void> {
-  const ds = await getDataSource();
-  const repo = ds.getRepository(StatsSettings);
-  const existing = await repo.findOne({ where: { id: 1 } });
-  if (existing) {
-    existing.onlineMin = range.onlineMin;
-    existing.onlineMax = range.onlineMax;
-    await repo.save(existing);
-  } else {
-    await repo.save(repo.create({ id: 1, ...range }));
-  }
-}
-
 // Site-wide switch letting the admin hide every admin-injected fake
 // leaderboard entry from public views in one click, and bring them all back
 // later — the bids themselves are untouched, only their visibility.
@@ -164,8 +138,6 @@ export interface PublicStatsResult {
   totalVisitors: number;
   bounceRatePct: number | null;
   sessionTimeSeconds: number | null;
-  onlineMin: number;
-  onlineMax: number;
 }
 
 function dateKeyDaysAgo(daysAgo: number): string {
@@ -189,7 +161,6 @@ export async function getPublicStatsForRange(rangeDays: number): Promise<PublicS
   const days = PUBLIC_STATS_RANGES.includes(rangeDays as PublicStatsRangeDays) ? rangeDays : 1;
   const todayKey = getDailyKey();
   const currentHour = new Date().getUTCHours();
-  const range = await getOnlineRange();
 
   if (days === 1) {
     const dayView = await getDayView(todayKey);
@@ -205,8 +176,6 @@ export async function getPublicStatsForRange(rangeDays: number): Promise<PublicS
       totalVisitors,
       bounceRatePct: dayView.bounceRatePct,
       sessionTimeSeconds: dayView.sessionTimeSeconds,
-      onlineMin: range.onlineMin,
-      onlineMax: range.onlineMax,
     };
   }
 
@@ -242,7 +211,5 @@ export async function getPublicStatsForRange(rangeDays: number): Promise<PublicS
     sessionTimeSeconds: sessionValues.length
       ? Math.round(sessionValues.reduce((s, v) => s + v, 0) / sessionValues.length)
       : null,
-    onlineMin: range.onlineMin,
-    onlineMax: range.onlineMax,
   };
 }

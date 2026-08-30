@@ -5,6 +5,7 @@ import { Category } from "./entities/category.entity";
 import { Bid } from "./entities/bid.entity";
 import { HallOfFameEntry } from "./entities/hall-of-fame.entity";
 import { StatsDaily, StatsHourly, StatsSettings } from "./entities/stats.entity";
+import { VisitorPresence } from "./entities/visitor-presence.entity";
 import { ensureCategoriesSeeded } from "./seed/categories.seed";
 
 declare global {
@@ -21,7 +22,7 @@ function createDataSource(): DataSource {
     url: env.databaseUrl,
     synchronize: true,
     logging: process.env.NODE_ENV === "development",
-    entities: [Category, Bid, HallOfFameEntry, StatsHourly, StatsDaily, StatsSettings],
+    entities: [Category, Bid, HallOfFameEntry, StatsHourly, StatsDaily, StatsSettings, VisitorPresence],
     // Supabase's pgbouncer pooler (transaction mode) doesn't support
     // prepared statements well; keep the pool small and disable them.
     extra: {
