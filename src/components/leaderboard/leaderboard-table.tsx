@@ -154,7 +154,7 @@ export function LeaderboardTable({
 
           <ol className="flex flex-col">
             {pageRows.map((row) => {
-              const label = row.handle ? `@${row.handle}` : row.url ? displayHostFor(row.url) : "";
+              const label = row.handle ? `@${row.handle}` : row.title ? row.title : row.url ? displayHostFor(row.url) : "";
 
               return (
                 <li key={row.id} className="border-b border-border last:border-b-0">
@@ -272,7 +272,7 @@ function TopThreeRow({
   showCategory: boolean;
   onClaimNow: (row: LeaderboardRow) => void;
 }) {
-  const label = row.handle ? `@${row.handle}` : row.url ? displayHostFor(row.url) : "";
+  const label = row.handle ? `@${row.handle}` : row.title ? row.title : row.url ? displayHostFor(row.url) : "";
   const isLeader = row.rank === 1;
 
   return (

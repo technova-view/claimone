@@ -32,7 +32,7 @@ function formatPeriodLabel(periodKey: string): string {
 
 function ChampionSpotlight({ entry }: { entry: HallOfFameEntry }) {
   const snap = entry.bidSnapshot;
-  const label = snap.handle ? `@${snap.handle}` : snap.url ? displayHostFor(snap.url) : "";
+  const label = snap.handle ? `@${snap.handle}` : snap.title ? snap.title : snap.url ? displayHostFor(snap.url) : "";
 
   return (
     <a
@@ -71,7 +71,7 @@ function ChampionSpotlight({ entry }: { entry: HallOfFameEntry }) {
 
 function CategoryWinnerCard({ entry }: { entry: HallOfFameEntry }) {
   const snap = entry.bidSnapshot;
-  const label = snap.handle ? `@${snap.handle}` : snap.url ? displayHostFor(snap.url) : "";
+  const label = snap.handle ? `@${snap.handle}` : snap.title ? snap.title : snap.url ? displayHostFor(snap.url) : "";
   const categoryIcon = { Icon: getCategoryIcon(snap.categoryName) };
 
   return (
@@ -100,7 +100,7 @@ function CategoryWinnerCard({ entry }: { entry: HallOfFameEntry }) {
 
 function CompactWinnerRow({ entry, highlight }: { entry: HallOfFameEntry; highlight?: boolean }) {
   const snap = entry.bidSnapshot;
-  const label = snap.handle ? `@${snap.handle}` : snap.url ? displayHostFor(snap.url) : "";
+  const label = snap.handle ? `@${snap.handle}` : snap.title ? snap.title : snap.url ? displayHostFor(snap.url) : "";
   const categoryIcon = { Icon: getCategoryIcon(snap.categoryName) };
 
   return (

@@ -46,6 +46,13 @@ export class Bid {
   @Column({ type: "varchar", length: 500, nullable: true })
   description!: string | null;
 
+  // Auto-fetched og:title/<title> of `url` at submission time — shown in
+  // place of the bare domain wherever the listing's name is displayed; null
+  // for handle bids or when the fetch fails (display falls back to the
+  // domain in that case).
+  @Column({ type: "varchar", length: 200, nullable: true })
+  title!: string | null;
+
   @Column({ type: "int" })
   amountCents!: number;
 

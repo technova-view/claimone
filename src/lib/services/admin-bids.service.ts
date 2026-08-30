@@ -3,7 +3,7 @@ import { Bid, BidScope, BidStatus } from "@/lib/db/entities/bid.entity";
 import { getCategoryBySlug } from "@/lib/services/category.service";
 import { BidValidationError, currentPeriodKeyFor, dedupeActiveListing } from "@/lib/services/bidding.service";
 import { normalizeUrl } from "@/lib/services/link-display";
-import { fetchUrlDescription } from "@/lib/services/link-metadata.service";
+import { fetchUrlMetadata } from "@/lib/services/link-metadata.service";
 
 export interface AdminBidRow {
   id: string;
@@ -145,9 +145,9 @@ export async function createAdminBid(input: CreateAdminBidInput): Promise<Bid> {
   }
 
   // Mirrors the real checkout flow (createPendingBid) — without this,
-  // admin-added listings never got the auto-fetched meta description that
+  // admin-added listings never got the auto-fetched title/description that
   // real customer listings do.
-  const description = url ? await fetchUrlDescription(url) : null;
+  const { title, description } = url ? await fetchUrlMetadata(url) : { title: null, description: null };
 
   const ds = await getDataSource();
   const repo = ds.getRepository(Bid);
@@ -158,6 +158,7 @@ export async function createAdminBid(input: CreateAdminBidInput): Promise<Bid> {
     url,
     handle,
     description,
+    title,
     amountCents: input.amountCents,
     periodKey: currentPeriodKeyFor(input.scope),
     paddleTransactionId: null,
@@ -215,9 +216,16 @@ export async function updateAdminBid(id: string, input: UpdateAdminBidInput): Pr
     if (!url && !handle) throw new BidValidationError("Provide either a URL or an X handle.");
     if (url && handle) throw new BidValidationError("Provide only one of URL or X handle, not both.");
     // Only re-fetch when the URL actually changed — avoids an unnecessary
-    // outbound request (and possibly clobbering a still-valid description)
-    // on edits that don't touch the link.
-    bid.description = url && url !== bid.url ? await fetchUrlDescription(url) : url ? bid.description : null;
+    // outbound request (and possibly clobbering still-valid metadata) on
+    // edits that don't touch the link.
+    if (url && url !== bid.url) {
+      const metadata = await fetchUrlMetadata(url);
+      bid.description = metadata.description;
+      bid.title = metadata.title;
+    } else if (!url) {
+      bid.description = null;
+      bid.title = null;
+    }
     bid.url = url;
     bid.handle = handle;
   }

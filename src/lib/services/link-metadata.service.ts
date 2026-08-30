@@ -30,30 +30,65 @@ async function assertPublicHttpUrl(url: URL): Promise<void> {
   }
 }
 
-function extractDescription(html: string): string | null {
+function extractMetaContent(html: string, wantedNames: string[]): string | null {
   const metaTagRegex = /<meta\s+[^>]*>/gi;
   const tags = html.match(metaTagRegex) ?? [];
-  for (const tag of tags) {
-    const nameMatch = tag.match(/(?:name|property)\s*=\s*["']([^"']+)["']/i);
-    const contentMatch = tag.match(/content\s*=\s*["']([^"']*)["']/i);
-    if (!nameMatch || !contentMatch) continue;
-    const name = nameMatch[1].toLowerCase();
-    if (name === "description" || name === "og:description") {
+  for (const wanted of wantedNames) {
+    for (const tag of tags) {
+      const nameMatch = tag.match(/(?:name|property)\s*=\s*["']([^"']+)["']/i);
+      const contentMatch = tag.match(/content\s*=\s*["']([^"']*)["']/i);
+      if (!nameMatch || !contentMatch) continue;
+      if (nameMatch[1].toLowerCase() !== wanted) continue;
       const value = contentMatch[1].trim();
-      if (value) return value.slice(0, 500);
+      if (value) return value;
     }
   }
   return null;
 }
 
-// Best-effort: returns null on any failure rather than throwing, since a
-// missing description shouldn't block a bid from being placed.
-export async function fetchUrlDescription(rawUrl: string): Promise<string | null> {
+function decodeHtmlEntities(value: string): string {
+  return value
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#0?39;/g, "'")
+    .replace(/&nbsp;/g, " ");
+}
+
+function extractDescription(html: string): string | null {
+  const value = extractMetaContent(html, ["og:description", "description"]);
+  return value ? decodeHtmlEntities(value).slice(0, 500) : null;
+}
+
+// og:title tends to be the cleaner "brand name" a site sets deliberately for
+// link previews; the <title> tag is the universal fallback every page has.
+function extractTitle(html: string): string | null {
+  const metaTitle = extractMetaContent(html, ["og:title"]);
+  if (metaTitle) return decodeHtmlEntities(metaTitle).slice(0, 200);
+
+  const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  if (titleMatch) {
+    const value = decodeHtmlEntities(titleMatch[1].trim().replace(/\s+/g, " "));
+    if (value) return value.slice(0, 200);
+  }
+  return null;
+}
+
+export interface UrlMetadata {
+  title: string | null;
+  description: string | null;
+}
+
+// Best-effort: returns nulls on any failure rather than throwing, since
+// missing metadata shouldn't block a bid from being placed.
+export async function fetchUrlMetadata(rawUrl: string): Promise<UrlMetadata> {
+  const empty: UrlMetadata = { title: null, description: null };
   let url: URL;
   try {
     url = new URL(rawUrl);
   } catch {
-    return null;
+    return empty;
   }
 
   try {
@@ -67,7 +102,7 @@ export async function fetchUrlDescription(rawUrl: string): Promise<string | null
         redirect: "follow",
         headers: { "User-Agent": "claimone.lol-bot/1.0" },
       });
-      if (!res.ok || !res.body) return null;
+      if (!res.ok || !res.body) return empty;
 
       const reader = res.body.getReader();
       let received = 0;
@@ -82,11 +117,11 @@ export async function fetchUrlDescription(rawUrl: string): Promise<string | null
       }
       await reader.cancel().catch(() => {});
 
-      return extractDescription(html);
+      return { title: extractTitle(html), description: extractDescription(html) };
     } finally {
       clearTimeout(timeout);
     }
   } catch {
-    return null;
+    return empty;
   }
 }

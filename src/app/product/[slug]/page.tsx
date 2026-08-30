@@ -67,7 +67,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const data = await loadListing(slug);
   if (!data) return { title: "Not found · claimone.lol" };
   const { row } = data;
-  const label = row.handle ? `@${row.handle}` : row.url ? displayHostFor(row.url) : slug;
+  const label = row.handle ? `@${row.handle}` : row.title ? row.title : row.url ? displayHostFor(row.url) : slug;
   return { title: `${label} · claimone.lol` };
 }
 
@@ -99,7 +99,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   const { row, overallTotal, categoryRank, categoryTotal } = data;
 
-  const label = row.handle ? `@${row.handle}` : row.url ? displayHostFor(row.url) : "";
+  const label = row.handle ? `@${row.handle}` : row.title ? row.title : row.url ? displayHostFor(row.url) : "";
   const isLeader = row.rank === 1;
   const categoryIcon = { Icon: getCategoryIcon(row.categoryName) };
 

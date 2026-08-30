@@ -6,6 +6,7 @@ export interface LeaderboardRow {
   url: string | null;
   handle: string | null;
   description: string | null;
+  title: string | null;
   amountCents: number;
   categoryId: string;
   categoryName: string;

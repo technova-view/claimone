@@ -57,6 +57,7 @@ async function upsertHallOfFameEntry(
         url: bid.url,
         handle: bid.handle,
         description: bid.description,
+        title: bid.title,
         amountCents: bid.amountCents,
         categoryId: bid.categoryId,
         categoryName: bid.category.name,

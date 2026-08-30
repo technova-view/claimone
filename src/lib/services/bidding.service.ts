@@ -5,7 +5,7 @@ import { Bid, BidScope, BidStatus, PaymentProvider } from "@/lib/db/entities/bid
 import { getCategoryBySlug } from "@/lib/services/category.service";
 import { getDailyKey, getWeeklyKey } from "@/lib/services/period";
 import { getClickBoostEnabled, getFakeItemsEnabled } from "@/lib/services/stats.service";
-import { fetchUrlDescription } from "@/lib/services/link-metadata.service";
+import { fetchUrlMetadata } from "@/lib/services/link-metadata.service";
 import { normalizeUrl } from "@/lib/services/link-display";
 import { slugForListing } from "@/lib/services/product-slug";
 import { computeCryptoAmountUsdt, findMatchingCryptoPayment } from "@/lib/services/crypto-payment.service";
@@ -66,6 +66,7 @@ export async function getLeaderboard({ scope, categorySlug }: LeaderboardParams)
     url: bid.url,
     handle: bid.handle,
     description: bid.description,
+    title: bid.title,
     amountCents: bid.amountCents,
     categoryId: bid.categoryId,
     categoryName: bid.category.name,
@@ -193,7 +194,7 @@ export async function createPendingBid(input: CreatePendingBidInput): Promise<Bi
     throw new BidValidationError(`Unknown category: ${input.categorySlug}`);
   }
 
-  const description = url ? await fetchUrlDescription(url) : null;
+  const { title, description } = url ? await fetchUrlMetadata(url) : { title: null, description: null };
 
   // Id generated up front (rather than left to the DB default) so both the
   // NOWPayments order_id and the self-hosted fallback's per-bid crypto
@@ -231,6 +232,7 @@ export async function createPendingBid(input: CreatePendingBidInput): Promise<Bi
     url,
     handle,
     description,
+    title,
     amountCents: input.amountCents,
     periodKey: currentPeriodKeyFor(input.scope),
     paddleTransactionId: null,
