@@ -3,6 +3,7 @@ import { Bid, BidScope, BidStatus } from "@/lib/db/entities/bid.entity";
 import { getCategoryBySlug } from "@/lib/services/category.service";
 import { BidValidationError, currentPeriodKeyFor, dedupeActiveListing } from "@/lib/services/bidding.service";
 import { normalizeUrl } from "@/lib/services/link-display";
+import { fetchUrlDescription } from "@/lib/services/link-metadata.service";
 
 export interface AdminBidRow {
   id: string;
@@ -143,6 +144,11 @@ export async function createAdminBid(input: CreateAdminBidInput): Promise<Bid> {
     throw new BidValidationError(`Unknown category: ${input.categorySlug}`);
   }
 
+  // Mirrors the real checkout flow (createPendingBid) — without this,
+  // admin-added listings never got the auto-fetched meta description that
+  // real customer listings do.
+  const description = url ? await fetchUrlDescription(url) : null;
+
   const ds = await getDataSource();
   const repo = ds.getRepository(Bid);
   const bid = repo.create({
@@ -151,7 +157,7 @@ export async function createAdminBid(input: CreateAdminBidInput): Promise<Bid> {
     categoryId: category.id,
     url,
     handle,
-    description: null,
+    description,
     amountCents: input.amountCents,
     periodKey: currentPeriodKeyFor(input.scope),
     paddleTransactionId: null,
@@ -208,6 +214,10 @@ export async function updateAdminBid(id: string, input: UpdateAdminBidInput): Pr
     const handle = input.handle?.trim().replace(/^@/, "") || null;
     if (!url && !handle) throw new BidValidationError("Provide either a URL or an X handle.");
     if (url && handle) throw new BidValidationError("Provide only one of URL or X handle, not both.");
+    // Only re-fetch when the URL actually changed — avoids an unnecessary
+    // outbound request (and possibly clobbering a still-valid description)
+    // on edits that don't touch the link.
+    bid.description = url && url !== bid.url ? await fetchUrlDescription(url) : url ? bid.description : null;
     bid.url = url;
     bid.handle = handle;
   }
