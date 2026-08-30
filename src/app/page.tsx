@@ -33,10 +33,6 @@ export default async function HomePage() {
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-5 px-6 pb-8">
         <div className="flex flex-col items-center gap-1.5 pt-2 text-center">
           <h1 className="text-xl font-bold tracking-tight sm:text-xl">Pay to rank. Build your position.</h1>
-          <p className="max-w-lg text-xs text-muted-foreground ">
-            Submit a product or profile and choose how much you want to bid. Higher bids rank higher. Rankings update
-            as new bids come in.
-          </p>
         </div>
         <ClaimHero
           rowsByScope={{
