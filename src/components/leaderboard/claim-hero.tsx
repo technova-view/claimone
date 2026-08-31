@@ -197,7 +197,7 @@ export function ClaimHero({
     <section ref={sectionRef} className="scroll-mt-24 flex flex-col gap-4 pt-0">
       <div className="rounded-2xl border border-border md:grid md:grid-cols-[40%_60%]">
         {/* Ledger pane */}
-        <div className="flex flex-col gap-3 rounded-t-2xl border-b border-border bg-secondary/30 p-5 md:rounded-t-none md:rounded-l-2xl md:border-b-0 md:border-r">
+        <div className="flex flex-col gap-2 rounded-t-2xl border-b border-border bg-secondary/30 p-4 md:rounded-t-none md:rounded-l-2xl md:border-b-0 md:border-r">
           <ol className="flex flex-col gap-1 font-mono text-sm tabular-nums">
             {ledger.top
               .filter((row): row is LedgerRow => row !== null)
@@ -270,7 +270,7 @@ export function ClaimHero({
 
         {/* Form pane */}
         {payment ? (
-          <div className="flex flex-col justify-center gap-4 rounded-b-2xl p-5 md:rounded-b-none md:rounded-r-2xl">
+          <div className="flex flex-col justify-center gap-3 rounded-b-2xl p-4 md:rounded-b-none md:rounded-r-2xl">
             <CryptoPaymentInstructions
               bidId={payment.bidId}
               payAmount={payment.payAmount}
@@ -281,7 +281,7 @@ export function ClaimHero({
         ) : (
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col justify-center gap-4 rounded-b-2xl p-5 md:rounded-b-none md:rounded-r-2xl"
+          className="flex flex-col justify-center gap-3 rounded-b-2xl p-4 md:rounded-b-none md:rounded-r-2xl"
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <CategorySelect
