@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowUp, AtSign, Globe2, Sparkles, Trophy } from "lucide-react";
+import { ArrowUp, AtSign, Coins, CreditCard, Globe2, Sparkles, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CategorySelect } from "@/components/category/category-select";
 import { submitBidCheckout } from "@/lib/services/checkout-client";
@@ -17,6 +17,13 @@ const SCOPE_OPTIONS: { value: BidScope; label: string }[] = [
   { value: BidScope.ALL_TIME, label: "All time" },
   { value: BidScope.DAILY, label: "Daily" },
   { value: BidScope.WEEKLY, label: "Weekly" },
+];
+
+type PaymentMethod = "card" | "crypto";
+
+const METHOD_OPTIONS: { value: PaymentMethod; label: string; icon: typeof CreditCard }[] = [
+  { value: "card", label: "Card", icon: CreditCard },
+  { value: "crypto", label: "Crypto", icon: Coins },
 ];
 
 function formatAmount(cents: number): string {
@@ -88,6 +95,7 @@ export function ClaimHero({
   const { claimHeroRequest } = useAppModals();
   const sectionRef = useRef<HTMLElement>(null);
   const [scope, setScope] = useState<BidScope>(BidScope.ALL_TIME);
+  const [method, setMethod] = useState<PaymentMethod>("card");
   const [categorySlug, setCategorySlug] = useState("");
   const [value, setValue] = useState("");
   const [amountCents, setAmountCents] = useState(() => minPriceFor(rowsByScope[BidScope.ALL_TIME], ""));
@@ -157,11 +165,20 @@ export function ClaimHero({
       scope,
       categorySlug,
       amountCents,
+      method,
       ...(linkType === "handle" ? { handle: trimmed.replace(/^@/, "") } : { url: trimmed }),
     });
     if (!result.ok) {
       setError(result.error);
       setStatus("idle");
+      return;
+    }
+    if (result.method === "card") {
+      // Full navigation, not local state — Gumroad checkout is a hosted
+      // product page, not an overlay. Leave status as "submitting" so the
+      // button stays disabled during the brief moment before the browser
+      // actually leaves.
+      window.location.href = result.checkoutUrl;
       return;
     }
     setStatus("idle");
@@ -334,6 +351,23 @@ export function ClaimHero({
                 +
               </button>
             </div>
+          </div>
+
+          <div className="flex shrink-0 gap-0.5 self-start rounded-md border border-border bg-secondary p-0.5 text-xs">
+            {METHOD_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setMethod(opt.value)}
+                className={cn(
+                  "flex items-center gap-1.5 rounded px-2.5 py-1 font-medium transition-colors",
+                  method === opt.value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <opt.icon className="size-3.5 shrink-0" />
+                {opt.label}
+              </button>
+            ))}
           </div>
 
           <div className="-mt-1 flex items-center justify-between gap-3">

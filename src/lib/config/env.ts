@@ -47,6 +47,24 @@ export const env = {
   get nowPaymentsEnv(): "sandbox" | "production" {
     return (process.env.NOWPAYMENTS_ENV as "sandbox" | "production") ?? "sandbox";
   },
+  // Optional: unset means card checkout is unavailable and callers should
+  // surface that as an error rather than silently falling back to crypto —
+  // the buyer explicitly chose "Card". See gumroad-payments.service.ts for
+  // the one-time dashboard setup this needs.
+  get gumroadAccessToken() {
+    return process.env.GUMROAD_ACCESS_TOKEN;
+  },
+  // Permalink (the "l/<this>" part of the product URL) of the dashboard-
+  // created "Pay what you want" product bids are charged against.
+  get gumroadProductPermalink() {
+    return process.env.GUMROAD_PRODUCT_PERMALINK;
+  },
+  // The seller's own subdomain (e.g. "technova2" for
+  // technova2.gumroad.com) — Gumroad product URLs are per-seller, not a
+  // shared gumroad.com/l/<permalink> path.
+  get gumroadSellerSubdomain() {
+    return process.env.GUMROAD_SELLER_SUBDOMAIN;
+  },
   get siteUrl() {
     return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   },

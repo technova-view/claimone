@@ -19,4 +19,5 @@ export enum PaymentProvider {
   PADDLE = "paddle",
   CRYPTO_DIRECT = "crypto_direct",
   NOWPAYMENTS = "nowpayments",
+  GUMROAD = "gumroad",
 }

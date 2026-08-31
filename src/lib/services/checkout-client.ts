@@ -6,18 +6,20 @@ export interface SubmitBidInput {
   scope: BidScope;
   categorySlug: string;
   amountCents: number;
+  method: "card" | "crypto";
   url?: string;
   handle?: string;
 }
 
 export type SubmitBidResult =
-  | { ok: true; bidId: string; payAmount: string; payAddress: string; payCurrencyLabel: string }
+  | { ok: true; method: "card"; bidId: string; checkoutUrl: string }
+  | { ok: true; method: "crypto"; bidId: string; payAmount: string; payAddress: string; payCurrencyLabel: string }
   | { ok: false; error: string };
 
-// Shared by any form that collects a scope/category/amount/link — posts the
-// bid and hands back the payment details (exact amount + address, whichever
-// provider generated them) for the caller to display, rather than
-// redirecting anywhere.
+// Shared by any form that collects a scope/category/amount/link/method —
+// posts the bid and hands back either a Gumroad checkout URL to redirect to
+// ("card") or the exact crypto amount + address to display ("crypto"),
+// rather than redirecting anywhere itself.
 export async function submitBidCheckout(input: SubmitBidInput): Promise<SubmitBidResult> {
   try {
     const res = await fetch("/api/checkout/create", {
@@ -29,8 +31,12 @@ export async function submitBidCheckout(input: SubmitBidInput): Promise<SubmitBi
     if (!res.ok) {
       return { ok: false, error: data.error ?? "Something went wrong." };
     }
+    if (data.method === "card") {
+      return { ok: true, method: "card", bidId: data.bidId, checkoutUrl: data.checkoutUrl };
+    }
     return {
       ok: true,
+      method: "crypto",
       bidId: data.bidId,
       payAmount: data.payAmount,
       payAddress: data.payAddress,

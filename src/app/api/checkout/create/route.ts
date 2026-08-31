@@ -9,6 +9,7 @@ interface CreateCheckoutBody {
   url?: string;
   handle?: string;
   amountCents: number;
+  method: "card" | "crypto";
 }
 
 export async function POST(request: NextRequest) {
@@ -22,6 +23,9 @@ export async function POST(request: NextRequest) {
   if (!Object.values(BidScope).includes(body.scope)) {
     return NextResponse.json({ error: "Invalid scope." }, { status: 400 });
   }
+  if (body.method !== "card" && body.method !== "crypto") {
+    return NextResponse.json({ error: "Invalid payment method." }, { status: 400 });
+  }
   if (!body.categorySlug || (!body.url && !body.handle) || !body.amountCents) {
     return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
   }
@@ -33,13 +37,18 @@ export async function POST(request: NextRequest) {
       amountCents: body.amountCents,
     });
 
-    const bid = await createPendingBid({
+    const { bid, checkoutUrl } = await createPendingBid({
       scope: body.scope,
       categorySlug: body.categorySlug,
       url: body.url,
       handle: body.handle,
       amountCents: body.amountCents,
+      method: body.method,
     });
+
+    if (checkoutUrl) {
+      return NextResponse.json({ bidId: bid.id, method: "card", checkoutUrl });
+    }
 
     const payment =
       bid.paymentProvider === PaymentProvider.NOWPAYMENTS
@@ -54,7 +63,7 @@ export async function POST(request: NextRequest) {
             payCurrencyLabel: "USDT (TRC-20)",
           };
 
-    return NextResponse.json({ bidId: bid.id, ...payment });
+    return NextResponse.json({ bidId: bid.id, method: "crypto", ...payment });
   } catch (error) {
     if (error instanceof BidValidationError) {
       return NextResponse.json({ error: error.message }, { status: 400 });

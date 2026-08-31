@@ -2,12 +2,20 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { Coins, CreditCard } from "lucide-react";
 import { BidScope } from "@/lib/types/scope";
 import { submitBidCheckout } from "@/lib/services/checkout-client";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { CryptoPaymentInstructions } from "@/components/claim/crypto-payment-instructions";
 import { cn } from "@/lib/utils";
+
+type PaymentMethod = "card" | "crypto";
+
+const METHOD_OPTIONS: { value: PaymentMethod; label: string; icon: typeof CreditCard }[] = [
+  { value: "card", label: "Card", icon: CreditCard },
+  { value: "crypto", label: "Crypto", icon: Coins },
+];
 
 export interface ClaimTarget {
   scope: BidScope;
@@ -53,6 +61,7 @@ function ClaimModalForm({
   const router = useRouter();
   const [categories, setCategories] = useState<{ slug: string; name: string }[]>([]);
   const scope = target.scope;
+  const [method, setMethod] = useState<PaymentMethod>("card");
   const [categorySlug, setCategorySlug] = useState(target.categorySlug);
   const [linkType, setLinkType] = useState<LinkType>(target.prefillLinkType ?? "url");
   const [value, setValue] = useState(target.prefillValue ?? "");
@@ -97,11 +106,18 @@ function ClaimModalForm({
       scope,
       categorySlug,
       amountCents,
+      method,
       ...(linkType === "url" ? { url: value.trim() } : { handle: value.trim() }),
     });
     if (!result.ok) {
       setError(result.error);
       setStatus("idle");
+      return;
+    }
+    if (result.method === "card") {
+      // Full navigation, not local state — Gumroad checkout is a hosted
+      // product page, not an overlay.
+      window.location.href = result.checkoutUrl;
       return;
     }
     setStatus("idle");
@@ -231,6 +247,26 @@ function ClaimModalForm({
             >
               +
             </button>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <span className={labelClass}>Payment method</span>
+          <div className="flex gap-1 self-start rounded-full border border-border bg-secondary p-1">
+            {METHOD_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setMethod(opt.value)}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                  method === opt.value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <opt.icon className="size-3.5 shrink-0" />
+                {opt.label}
+              </button>
+            ))}
           </div>
         </div>
 

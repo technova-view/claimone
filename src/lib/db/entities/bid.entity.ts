@@ -71,11 +71,12 @@ export class Bid {
   @Column({ type: "varchar", length: 80, nullable: true })
   cryptoTxHash!: string | null;
 
-  // NOWPayments is tried first at checkout time (unique deposit address per
-  // payment, provider-hosted chain monitoring); the self-hosted TRC20 flow
-  // above is the fallback when NOWPayments isn't configured or its API call
-  // fails. Defaults to CRYPTO_DIRECT so existing/self-hosted-only rows read
-  // correctly without a backfill.
+  // The buyer's checkout-time card/crypto choice decides this: GUMROAD for
+  // card checkout; for crypto, NOWPayments is tried first at checkout time
+  // (unique deposit address per payment, provider-hosted chain monitoring),
+  // with the self-hosted TRC20 flow above as its fallback when NOWPayments
+  // isn't configured or its API call fails. Defaults to CRYPTO_DIRECT so
+  // existing/self-hosted-only rows read correctly without a backfill.
   @Column({ type: "enum", enum: PaymentProvider, default: PaymentProvider.CRYPTO_DIRECT })
   paymentProvider!: PaymentProvider;
 
@@ -96,6 +97,14 @@ export class Bid {
   // account-level default currency changes later.
   @Column({ type: "varchar", length: 32, nullable: true })
   nowpaymentsPayCurrency!: string | null;
+
+  // Set only once the webhook's sale_id has been independently confirmed
+  // against Gumroad's own Sales API (see gumroad-payments.service.ts) — the
+  // checkout link itself (a plain product URL, not a server-created
+  // session) has nothing else Gumroad-specific to persist earlier.
+  @Index({ unique: true, where: '"gumroadSaleId" IS NOT NULL' })
+  @Column({ type: "varchar", length: 80, nullable: true })
+  gumroadSaleId!: string | null;
 
   // UTC date (daily) or ISO week (weekly) this bid belongs to; null for all_time.
   @Column({ type: "varchar", length: 20, nullable: true })

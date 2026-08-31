@@ -10,6 +10,7 @@ import { normalizeUrl } from "@/lib/services/link-display";
 import { slugForListing } from "@/lib/services/product-slug";
 import { computeCryptoAmountUsdt, findMatchingCryptoPayment } from "@/lib/services/crypto-payment.service";
 import { createNowPaymentsInvoice, getNowPaymentsSdk } from "@/lib/services/nowpayments.service";
+import { buildGumroadCheckoutUrl } from "@/lib/services/gumroad-payments.service";
 import {
   MAX_BID_CENTS,
   MIN_BID_CENTS,
@@ -176,9 +177,18 @@ interface CreatePendingBidInput {
   url?: string | null;
   handle?: string | null;
   amountCents: number;
+  method: "card" | "crypto";
 }
 
-export async function createPendingBid(input: CreatePendingBidInput): Promise<Bid> {
+export interface CreatePendingBidResult {
+  bid: Bid;
+  // Set only for "card" — the buyer must be redirected to Gumroad's hosted
+  // checkout to actually pay. Always null for "crypto", whose pay
+  // amount/address live on the bid itself instead.
+  checkoutUrl: string | null;
+}
+
+export async function createPendingBid(input: CreatePendingBidInput): Promise<CreatePendingBidResult> {
   const url = input.url?.trim() ? normalizeUrl(input.url) : null;
   const handle = input.handle?.trim().replace(/^@/, "") || null;
 
@@ -196,30 +206,48 @@ export async function createPendingBid(input: CreatePendingBidInput): Promise<Bi
 
   const { title, description } = url ? await fetchUrlMetadata(url) : { title: null, description: null };
 
-  // Id generated up front (rather than left to the DB default) so both the
-  // NOWPayments order_id and the self-hosted fallback's per-bid crypto
-  // amount can be derived from it before the first insert.
+  // Id generated up front (rather than left to the DB default) so the
+  // NOWPayments order_id, the self-hosted fallback's per-bid crypto amount,
+  // and the Gumroad checkout link's bidId param can all be derived from it
+  // before the first insert.
   const id = randomUUID();
 
-  // NOWPayments is the primary path: a unique deposit address per payment,
-  // provider-hosted chain monitoring, and support for more networks than we
-  // want to hand-build ourselves. Any failure (not configured, network
-  // error, API error) falls straight back to the self-hosted TRC-20 flow —
-  // "primary provider is down" should never be a reason checkout breaks.
   let paymentProvider = PaymentProvider.CRYPTO_DIRECT;
   let nowpaymentsPaymentId: string | null = null;
   let nowpaymentsPayAddress: string | null = null;
   let nowpaymentsPayAmount: string | null = null;
   let nowpaymentsPayCurrency: string | null = null;
-  try {
-    const invoice = await createNowPaymentsInvoice(id, input.amountCents);
-    paymentProvider = PaymentProvider.NOWPAYMENTS;
-    nowpaymentsPaymentId = invoice.paymentId;
-    nowpaymentsPayAddress = invoice.payAddress;
-    nowpaymentsPayAmount = invoice.payAmount;
-    nowpaymentsPayCurrency = invoice.payCurrency;
-  } catch (error) {
-    console.error("NOWPayments invoice creation failed, falling back to self-hosted crypto flow", error);
+  let checkoutUrl: string | null = null;
+
+  if (input.method === "card") {
+    // Unlike the crypto path, an unconfigured Gumroad setup does not fall
+    // back to crypto — the buyer explicitly chose "Card", so silently
+    // handing them a USDT screen instead would be a bait-and-switch. No bid
+    // row is persisted in this case.
+    try {
+      checkoutUrl = buildGumroadCheckoutUrl(id, input.amountCents, slugForListing({ url, handle }));
+      paymentProvider = PaymentProvider.GUMROAD;
+    } catch (error) {
+      console.error("Gumroad checkout link creation failed", error);
+      throw new BidValidationError("Card payments are temporarily unavailable — please try Crypto instead.");
+    }
+  } else {
+    // NOWPayments is the primary path: a unique deposit address per
+    // payment, provider-hosted chain monitoring, and support for more
+    // networks than we want to hand-build ourselves. Any failure (not
+    // configured, network error, API error) falls straight back to the
+    // self-hosted TRC-20 flow — "primary provider is down" should never be
+    // a reason checkout breaks.
+    try {
+      const invoice = await createNowPaymentsInvoice(id, input.amountCents);
+      paymentProvider = PaymentProvider.NOWPAYMENTS;
+      nowpaymentsPaymentId = invoice.paymentId;
+      nowpaymentsPayAddress = invoice.payAddress;
+      nowpaymentsPayAmount = invoice.payAmount;
+      nowpaymentsPayCurrency = invoice.payCurrency;
+    } catch (error) {
+      console.error("NOWPayments invoice creation failed, falling back to self-hosted crypto flow", error);
+    }
   }
 
   const ds = await getDataSource();
@@ -243,9 +271,11 @@ export async function createPendingBid(input: CreatePendingBidInput): Promise<Bi
     nowpaymentsPayAddress,
     nowpaymentsPayAmount,
     nowpaymentsPayCurrency,
+    gumroadSaleId: null,
     activatedAt: null,
   });
-  return repo.save(bid);
+  const saved = await repo.save(bid);
+  return { bid: saved, checkoutUrl };
 }
 
 // One listing (same URL, or same X handle) can't hold two active spots in
@@ -368,6 +398,18 @@ export async function activateBidWithCrypto(bidId: string, cryptoTxHash: string)
 export async function activateBidWithNowPayments(bidId: string, nowpaymentsPaymentId: string): Promise<Bid> {
   return activateBidCore(bidId, (bid) => {
     bid.nowpaymentsPaymentId = nowpaymentsPaymentId;
+  });
+}
+
+// Only called by the Gumroad ping route after it has independently
+// re-verified the sale against Gumroad's own Sales API (see
+// gumroad-payments.service.ts) — the ping's own body is never trusted
+// directly. No cron-sweep fallback: Gumroad retries an unacknowledged ping
+// hourly for 3 hours on its own, which covers the same "webhook got lost"
+// case the crypto sweep exists for.
+export async function activateBidWithGumroad(bidId: string, gumroadSaleId: string): Promise<Bid> {
+  return activateBidCore(bidId, (bid) => {
+    bid.gumroadSaleId = gumroadSaleId;
   });
 }
 
