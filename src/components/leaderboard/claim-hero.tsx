@@ -353,30 +353,31 @@ export function ClaimHero({
             </div>
           </div>
 
-          <div className="flex shrink-0 gap-0.5 self-start rounded-md border border-border bg-secondary p-0.5 text-xs">
-            {METHOD_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setMethod(opt.value)}
-                className={cn(
-                  "flex items-center gap-1.5 rounded px-2.5 py-1 font-medium transition-colors",
-                  method === opt.value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <opt.icon className="size-3.5 shrink-0" />
-                {opt.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="-mt-1 flex items-center justify-between gap-3">
+          <div className="-mt-1 flex flex-wrap items-center justify-between gap-3">
             <p className={cn("text-xs text-muted-foreground", categorySlug && "invisible")}>
               Pick a category to place this bid.
             </p>
-            {takesTop && (
-              <span className="text-xs font-medium text-primary">{ledger.isEmpty ? "Be the first" : "Takes #1"}</span>
-            )}
+            <div className="flex items-center gap-3">
+              {takesTop && (
+                <span className="text-xs font-medium text-primary">{ledger.isEmpty ? "Be the first" : "Takes #1"}</span>
+              )}
+              <div className="flex shrink-0 gap-0.5 rounded-md border border-border bg-secondary p-0.5 text-xs">
+                {METHOD_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setMethod(opt.value)}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded px-2.5 py-1 font-medium transition-colors",
+                      method === opt.value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    <opt.icon className="size-3.5 shrink-0" />
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
