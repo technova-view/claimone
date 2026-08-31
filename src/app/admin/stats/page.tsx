@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Eraser, Shuffle } from "lucide-react";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { Button } from "@/components/ui/button";
+import { LiveDot } from "@/components/ui/live-dot";
 import { cn } from "@/lib/utils";
+
+const ONLINE_POLL_INTERVAL_MS = 8000;
 
 const HOUR_LABELS = Array.from({ length: 24 }, (_, h) => {
   if (h === 0) return "12am";
@@ -54,6 +57,26 @@ export default function AdminStatsPage() {
 
   const [randomMin, setRandomMin] = useState(2000);
   const [randomMax, setRandomMax] = useState(6000);
+
+  const [onlineCount, setOnlineCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    function poll() {
+      fetch("/api/presence/count")
+        .then((res) => res.json())
+        .then((data) => {
+          if (!cancelled && typeof data.count === "number") setOnlineCount(data.count);
+        })
+        .catch(() => {});
+    }
+    poll();
+    const interval = setInterval(poll, ONLINE_POLL_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -141,6 +164,22 @@ export default function AdminStatsPage() {
             </Button>
           </div>
         </div>
+
+        <section className="flex items-center gap-3 rounded-3xl border border-border bg-card p-6">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <LiveDot />
+          </span>
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Online right now</p>
+            <p className="font-mono text-2xl font-bold text-primary">
+              {onlineCount === null ? "—" : onlineCount.toLocaleString()}
+            </p>
+          </div>
+          <p className="ml-auto max-w-xs text-right text-xs text-muted-foreground">
+            Real count of active browser sessions in the last 60s — not editable, no admin control over this number
+            anymore.
+          </p>
+        </section>
 
         <section className="rounded-3xl border border-border bg-card p-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
